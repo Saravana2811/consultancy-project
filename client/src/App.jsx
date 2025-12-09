@@ -6,6 +6,7 @@ import Footer from './components/before/Footer'
 import './App.css'
 import Signin from './components/pages/Signin'
 import Login from './components/pages/Login'
+import Home from './components/after/Home.jsx'
 function App() {
   return (
     <BrowserRouter>
@@ -23,6 +24,7 @@ function App() {
         />
         <Route path="/signin" element={<Signin />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/home" element={<Home />} />
       </Routes>
     </BrowserRouter>
   )

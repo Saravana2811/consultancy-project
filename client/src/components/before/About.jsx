@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-
+import ph1 from "../../assets/photo1.jpg";
 export default function About() {
 	const pageStyle = {
 		width: "100%",
@@ -174,7 +174,7 @@ export default function About() {
 
 					<div className="image-card" style={imageCard}>
 						<img
-							src="https://images.unsplash.com/photo-1520975919411-3a9f29b5f3c8?auto=format&fit=crop&w=1200&q=60"
+							src={ph1}
 							alt="Color cards and fabrics"
 							style={imageEl}
 						/>

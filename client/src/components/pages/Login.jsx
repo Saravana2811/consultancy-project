@@ -3,6 +3,7 @@ import s1 from "../../assets/sigin.jpg";
 import s2 from "../../assets/sigin2.jpg";
 import s3 from "../../assets/sigin3.jpg";
 import s4 from "../../assets/sigin4.jpg";
+import { Link } from "react-router-dom";
 export default function Login() {
   const [slide, setSlide] = useState(0);
   const images = [
@@ -189,7 +190,9 @@ export default function Login() {
             <a href="#" style={{ color: "#cbbafc" }}>Forgot password?</a>
           </div>
 
-          <button style={primaryBtn}>Log in</button>
+          <button style={primaryBtn}><Link to="/home" style={{ textDecoration: "none", color: "inherit", display: "inline-block" }}>
+                          LogIn
+                        </Link></button>
 
           <div style={sepRow}>
             <div style={line} />

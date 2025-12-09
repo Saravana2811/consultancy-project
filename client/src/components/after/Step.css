@@ -1,0 +1,158 @@
+/* Step.css — reusable styling for a single process step card */
+
+:root {
+  --step-fg: inherit;
+  --step-muted: #78839a;
+  --step-brand: #4f7cff;
+  --step-brand-2: #7c4fff;
+  --step-card-bg: rgba(255,255,255,0.06);
+  --step-card-border: rgba(0,0,0,0.08);
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: start;
+  gap: 18px;
+  padding: 18px;
+}
+
+/* Tree-style alternating layout wrappers */
+.steps-timeline { position: relative; max-width: 1100px; margin: 0 auto; }
+.timeline-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(79,124,255,0.25), rgba(124,79,255,0.25));
+}
+
+.step-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 24px;
+  margin: 26px 0;
+  opacity: 0;
+  transform: translateY(16px) scale(0.98);
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 600ms ease;
+}
+.step-item.in-view { opacity: 1; transform: translateY(0) scale(1); }
+
+.step-item.left .step-card { grid-column: 1 / 2; }
+.step-item.left .step-dot { grid-column: 2 / 3; }
+.step-item.right .step-card { grid-column: 2 / 3; }
+.step-item.right .step-dot { grid-column: 1 / 2; }
+
+.step-dot {
+  justify-self: center;
+  min-width: 110px;
+  max-width: 140px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  display: grid;
+  place-items: center;
+}
+
+.step-caption {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: inherit;
+  text-align: center;
+}
+
+.step-card {
+  position: relative;
+  background: var(--step-card-bg);
+  border: 1px solid var(--step-card-border);
+  border-radius: 16px;
+  padding: 18px 18px 14px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  transform: translateY(8px);
+  opacity: 0;
+  animation: stepReveal 600ms cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+@keyframes stepReveal {
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.step-index {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--step-muted);
+  letter-spacing: 0.8px;
+}
+
+.step-media {
+  margin: 6px -4px 10px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.step-media img {
+  display: block;
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  transform: scale(1.02);
+  transition: transform 600ms ease;
+}
+
+.step-card:hover .step-media img { transform: scale(1.06); }
+
+.step-title { font-size: 18px; font-weight: 700; }
+.step-desc { margin-top: 6px; color: var(--step-muted); }
+
+.step-progress {
+  position: relative;
+  margin-top: 12px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.step-progress-bar {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: linear-gradient(90deg, var(--step-brand), var(--step-brand-2));
+  animation: stepProgress 1800ms cubic-bezier(0.22, 1, 0.36, 1) 300ms forwards;
+}
+
+@keyframes stepProgress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+/* Center-line for standalone usage (optional) */
+.step-timeline {
+  position: relative;
+}
+.step-timeline::before { content: none; }
+
+/* Responsive */
+@media (min-width: 860px) {
+  .step { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 859px) {
+  .timeline-line { left: 12px; transform: none; }
+  .step-item { grid-template-columns: 42px 1fr; }
+  .step-item.left .step-card,
+  .step-item.right .step-card { grid-column: 2 / 3; }
+  .step-item.left .step-dot,
+  .step-item.right .step-dot { grid-column: 1 / 2; }
+}
