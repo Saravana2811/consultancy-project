@@ -1,0 +1,723 @@
+import React, { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import catalogImg from '../../assets/photo4.jpg'
+
+export default function Payment() {
+  const { state } = useLocation()
+  const navigate = useNavigate()
+  const product = state?.product
+
+  const [method, setMethod] = useState('card')
+  const [processing, setProcessing] = useState(false)
+  const [success, setSuccess] = useState(false)
+
+  // Payment fields
+  const [card, setCard] = useState('')
+  const [cardExpiry, setCardExpiry] = useState('')
+  const [cardCvv, setCardCvv] = useState('')
+  const [upi, setUpi] = useState('')
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState('')
+
+  // Delivery details
+  const [fullName, setFullName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [gstNumber, setGstNumber] = useState('')
+  const [address, setAddress] = useState('')
+  const [city, setCity] = useState('')
+  const [deliveryState, setDeliveryState] = useState('')
+  const [pincode, setPincode] = useState('')
+
+  // Order details
+  const [selectedColorNumbers, setSelectedColorNumbers] = useState('')
+  const [lengthMeters, setLengthMeters] = useState('')
+  const [promoCode, setPromoCode] = useState('')
+  const [discount, setDiscount] = useState(0)
+  const [orderId, setOrderId] = useState('')
+
+  // Price per meter (you can adjust this)
+  const pricePerMeter = 45
+  const deliveryCharge = lengthMeters && Number(lengthMeters) >= 5000 ? 0 : 299
+
+  // Calculate totals
+  const calculateSubtotal = () => {
+    const length = Number(lengthMeters) || 0
+    return length * pricePerMeter
+  }
+
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal()
+    const discountAmount = (subtotal * discount) / 100
+    return subtotal - discountAmount + deliveryCharge
+  }
+
+  // Apply promo code
+  const applyPromo = () => {
+    const code = promoCode.toUpperCase()
+    if (code === 'TEXTILE10') {
+      setDiscount(10)
+      setError('')
+    } else if (code === 'FIRSTORDER') {
+      setDiscount(10)
+      setError('')
+    } else if (code === 'BULK20') {
+      setDiscount(20)
+      setError('')
+    } else {
+      setError('Invalid promo code')
+      setDiscount(0)
+    }
+  }
+
+  // Generate order ID
+  const generateOrderId = () => {
+    return 'PTM' + Date.now().toString().slice(-8)
+  }
+
+  // Get estimated delivery date
+  const getDeliveryDate = () => {
+    const date = new Date()
+    date.setDate(date.getDate() + 7)
+    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+
+  if (!product) return null
+
+  const handlePay = (e) => {
+    e.preventDefault()
+    setError('')
+
+    // Validate delivery details
+    if (!fullName.trim()) return setError('Please enter your full name')
+    if (!phone || phone.length < 10) return setError('Please enter a valid 10-digit phone number')
+    if (!gstNumber || gstNumber.length !== 15) return setError('Please enter a valid 15-character GST number')
+    if (!email.includes('@')) return setError('Please enter a valid email address for receipt')
+    if (!address.trim()) return setError('Please enter delivery address')
+    if (!city.trim()) return setError('Please enter city')
+    if (!pincode || pincode.length !== 6) return setError('Please enter a valid 6-digit pincode')
+
+    // Validate payment method
+    if (method === 'card') {
+      if (card.replace(/\s/g, '').length < 15) return setError('Enter valid card number (15-16 digits)')
+      if (!cardExpiry || cardExpiry.length < 5) return setError('Enter card expiry (MM/YY)')
+      if (!cardCvv || cardCvv.length < 3) return setError('Enter valid CVV')
+    }
+
+    if (method === 'upi' && !upi.includes('@'))
+      return setError('Enter valid UPI ID (e.g., name@upi)')
+
+    // Validate color numbers and length
+    const colorNums = selectedColorNumbers
+      .split(/[\s,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+
+    if (colorNums.length === 0) return setError('Please enter at least one color number from the catalog')
+
+    const lengthVal = Number(String(lengthMeters).replace(/[^0-9.-]/g, ''))
+    if (!lengthVal || lengthVal < 1000) return setError('Length must be at least 1000 meters')
+
+    setProcessing(true)
+    const newOrderId = generateOrderId()
+    setOrderId(newOrderId)
+
+    // Send bill email
+    try {
+      const orderDetails = {
+        orderId: newOrderId,
+        customerName: fullName,
+        productTitle: product.title,
+        lengthMeters: lengthVal,
+        colors: selectedColorNumbers,
+        phone,
+        gstNumber,
+        address,
+        city,
+        state: deliveryState,
+        pincode,
+        pricePerMeter,
+        subtotal: calculateSubtotal(),
+        discount,
+        deliveryCharge,
+        total: calculateTotal(),
+        deliveryDate: getDeliveryDate(),
+        paymentMethod: method.toUpperCase()
+      }
+
+      // Call backend API to send bill email
+      fetch('http://localhost:5000/api/send-bill', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          orderDetails: orderDetails
+        })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.ok) {
+            console.log('Bill email sent successfully')
+          } else {
+            console.error('Failed to send bill email:', data.error)
+          }
+        })
+        .catch(err => {
+          console.error('Error sending bill email:', err)
+        })
+    } catch (err) {
+      console.error('Error preparing bill email:', err)
+    }
+
+    setTimeout(() => {
+      setProcessing(false)
+      setSuccess(true)
+    }, 2000)
+  }
+
+  if (success) {
+    return (
+      <section style={successWrap}>
+        <div style={successCard}>
+          <div style={check}>✓</div>
+          <h2>Order Placed Successfully!</h2>
+          <div style={{ fontSize: 14, color: '#6b7280', marginTop: 8 }}>
+            Order ID: <strong style={{ color: '#7b5cf1' }}>{orderId}</strong>
+          </div>
+          <div style={{ marginTop: 20, textAlign: 'left', background: '#f9fafb', padding: 16, borderRadius: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span>Product:</span>
+              <strong>{product.title}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span>Length:</span>
+              <strong>{lengthMeters} meters</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span>Colors:</span>
+              <strong>{selectedColorNumbers}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span>Delivery to:</span>
+              <strong>{fullName}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: 12, paddingTop: 12, borderTop: '2px solid #e5e7eb' }}>
+              <span>Total Paid:</span>
+              <span style={{ color: '#22c55e' }}>₹{calculateTotal().toLocaleString()}</span>
+            </div>
+          </div>
+          <div style={{ marginTop: 16, padding: 12, background: '#eff6ff', borderRadius: 10, fontSize: 14 }}>
+            📦 Estimated Delivery: <strong>{getDeliveryDate()}</strong>
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+            <button style={primaryBtn} onClick={() => window.print()}>
+              📄 Download Invoice
+            </button>
+            <button style={{...primaryBtn, background: '#6b7280'}} onClick={() => navigate('/home')}>
+              🏠 Back to Home
+            </button>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section style={wrapper}>
+      <div style={grid}>
+
+        {/* LEFT — PRODUCT SUMMARY */}
+        <div style={productCard}>
+          <img src={product.image} alt={product.title} style={img} />
+          <h3>{product.title}</h3>
+          <p style={muted}>{product.desc}</p>
+
+          <img
+            src={catalogImg}
+            alt="Color Catalog"
+            onClick={() => window.open(catalogImg, '_blank')}
+            style={{ width: '100%', borderRadius: 12, marginTop: 12, marginBottom: 12, cursor: 'pointer', border: '2px solid #e5e7eb' }}
+            title="Click to view full size"
+          />
+          <div style={{ fontSize: 13, color: '#7b5cf1', textAlign: 'center', marginBottom: 16 }}>
+            👆 Click to view color catalog
+          </div>
+
+          <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
+
+          <div style={{ background: '#f9fafb', padding: 14, borderRadius: 12, marginBottom: 16 }}>
+            <h4 style={{ marginBottom: 10, fontSize: 15 }}>Order Summary</h4>
+            <div style={row}>
+              <span>Price per meter</span>
+              <span>₹{pricePerMeter}</span>
+            </div>
+            <div style={row}>
+              <span>Length</span>
+              <span>{lengthMeters || 0} meters</span>
+            </div>
+            <div style={row}>
+              <span>Subtotal</span>
+              <span>₹{calculateSubtotal().toLocaleString()}</span>
+            </div>
+            {discount > 0 && (
+              <div style={{ ...row, color: '#22c55e' }}>
+                <span>Discount ({discount}%)</span>
+                <span>-₹{((calculateSubtotal() * discount) / 100).toLocaleString()}</span>
+              </div>
+            )}
+            
+            {deliveryCharge === 0 && (
+              <div style={{ fontSize: 12, color: '#22c55e', marginTop: 4 }}>
+                🎉 Free delivery on orders ≥ 5000m
+              </div>
+            )}
+            <div style={{ ...row, fontWeight: 800, fontSize: 18, marginTop: 12, paddingTop: 12, borderTop: '2px solid #e5e7eb' }}>
+              <span>Total</span>
+              <span style={{ color: '#7b5cf1' }}>₹{calculateTotal().toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div style={{ fontSize: 13, color: '#6b7280', background: '#eff6ff', padding: 12, borderRadius: 10 }}>
+            📦 Estimated Delivery: <strong>{getDeliveryDate()}</strong>
+          </div>
+        </div>
+
+        {/* RIGHT — PAYMENT */}
+        <form onSubmit={handlePay} style={payCard}>
+          <h3>Secure Checkout</h3>
+
+          {/* DELIVERY DETAILS */}
+          <div style={{ marginTop: 20 }}>
+            <h4 style={{ fontSize: 16, marginBottom: 12, color: '#a884ff' }}>📍 Delivery Details</h4>
+            
+            <label>Full Name *</label>
+            <input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Enter your full name"
+            />
+
+            <label>Phone Number *</label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+              placeholder="10-digit number"
+            />
+
+            <label style={{ marginTop: 12 }}>GST Number *</label>
+            <input
+              value={gstNumber}
+              onChange={(e) => setGstNumber(e.target.value.toUpperCase().slice(0, 15))}
+              placeholder="15-digit GST number"
+            />
+
+            <label style={{ marginTop: 12 }}>Address *</label>
+            <textarea
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="House/Flat no, Building, Street"
+              rows="2"
+            />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+              <div>
+                <label>City *</label>
+                <input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City"
+                />
+              </div>
+              <div>
+                <label>State *</label>
+                <input
+                  value={deliveryState}
+                  onChange={(e) => setDeliveryState(e.target.value)}
+                  placeholder="State"
+                />
+              </div>
+            </div>
+
+            <label style={{ marginTop: 12 }}>Pincode *</label>
+            <input
+              value={pincode}
+              onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="6-digit pincode"
+            />
+
+            <label style={{ marginTop: 12 }}>Email (for receipt) *</label>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@email.com"
+            />
+          </div>
+
+          {/* ORDER DETAILS */}
+          <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <h4 style={{ fontSize: 16, marginBottom: 12, color: '#a884ff' }}>🎨 Order Details</h4>
+            
+            <label>Color Numbers (from catalog) *</label>
+            <input
+              value={selectedColorNumbers}
+              onChange={(e) => setSelectedColorNumbers(e.target.value)}
+              placeholder="e.g. 1001,1005,1010"
+            />
+            <div style={hint}>View catalog above and enter color numbers separated by commas</div>
+
+            <label style={{ marginTop: 12 }}>Length (meters) *</label>
+            <input
+              value={lengthMeters}
+              onChange={(e) => setLengthMeters(e.target.value.replace(/\D/g, ''))}
+              placeholder="Minimum 1000 meters"
+            />
+            <div style={hint}>Minimum order: 1000 meters • Free delivery on 5000+ meters</div>
+
+            {/* PROMO CODE */}
+            <div style={{ marginTop: 16 }}>
+              <label>Promo Code</label>
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <input
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  placeholder="Enter code"
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={applyPromo}
+                  style={{
+                    padding: '0 20px',
+                    borderRadius: 12,
+                    background: 'rgba(168, 132, 255, 0.2)',
+                    color: '#a884ff',
+                    border: '1px solid #a884ff',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  Apply
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: '#a884ff', marginTop: 6 }}>
+                💡 Try: TEXTILE10, FIRSTORDER, BULK20
+              </div>
+            </div>
+          </div>
+
+          {/* PAYMENT METHODS */}
+          <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <h4 style={{ fontSize: 16, marginBottom: 12, color: '#a884ff' }}>💳 Payment Method</h4>
+            <div style={tabs}>
+              <PayTab label="💳 Card" active={method === 'card'} onClick={() => setMethod('card')} />
+              <PayTab label="📱 UPI" active={method === 'upi'} onClick={() => setMethod('upi')} />
+              <PayTab label="🏦 Bank" active={method === 'net'} onClick={() => setMethod('net')} />
+              <PayTab label="🚚 COD" active={method === 'cod'} onClick={() => setMethod('cod')} />
+            </div>
+          </div>
+
+          {/* DYNAMIC FIELDS */}
+          {method === 'card' && (
+            <>
+              <label>Card Number *</label>
+              <input
+                value={card}
+                onChange={(e) =>
+                  setCard(e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim())
+                }
+                placeholder="xxxx xxxx xxxx xxxx"
+                maxLength="19"
+              />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+                <div>
+                  <label>Expiry (MM/YY) *</label>
+                  <input
+                    value={cardExpiry}
+                    onChange={(e) => {
+                      let val = e.target.value.replace(/\D/g, '')
+                      if (val.length >= 2) val = val.slice(0, 2) + '/' + val.slice(2, 4)
+                      setCardExpiry(val)
+                    }}
+                    placeholder="MM/YY"
+                    maxLength="5"
+                  />
+                </div>
+                <div>
+                  <label>CVV *</label>
+                  <input
+                    value={cardCvv}
+                    onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    placeholder="CVV"
+                    maxLength="4"
+                    type="password"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {method === 'upi' && (
+            <>
+              <label>UPI ID *</label>
+              <input
+                value={upi}
+                onChange={(e) => setUpi(e.target.value)}
+                placeholder="name@upi"
+              />
+              <div style={hint}>GPay • PhonePe • Paytm • Amazon Pay</div>
+            </>
+          )}
+
+          {method === 'net' && (
+            <>
+              <label>Select Bank *</label>
+              <select>
+                <option>State Bank of India</option>
+                <option>HDFC Bank</option>
+                <option>ICICI Bank</option>
+                <option>Axis Bank</option>
+                <option>Punjab National Bank</option>
+                <option>Bank of Baroda</option>
+                <option>Kotak Mahindra Bank</option>
+              </select>
+            </>
+          )}
+
+          {method === 'cod' && (
+            <div style={codBox}>
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>💵 Cash on Delivery</div>
+              <div style={{ fontSize: 13 }}>Pay when product is delivered to your doorstep</div>
+              <div style={{ fontSize: 12, marginTop: 8, color: '#a884ff' }}>
+                ✓ No online payment required<br/>
+                ✓ Pay after inspection<br/>
+                ✓ Additional ₹50 COD charge applies
+              </div>
+            </div>
+          )}
+
+            {error && <div style={errorText}>{error}</div>}
+
+          <button disabled={processing} style={{...payBtn, opacity: processing ? 0.7 : 1}}>
+            {processing ? '⏳ Processing Payment...' : `Pay ₹${calculateTotal().toLocaleString()}`}
+          </button>
+
+         
+
+          {/* CSS */}
+          <style>{`
+            input, select, textarea {
+              width: 100%;
+              padding: 13px 14px;
+              border-radius: 12px;
+              border: 1px solid rgba(255,255,255,0.08);
+              background: rgba(255,255,255,0.08);
+              color: #fff;
+              margin-top: 8px;
+              transition: all .25s ease;
+              font-family: inherit;
+              font-size: 14px;
+            }
+            textarea {
+              resize: vertical;
+              min-height: 60px;
+            }
+            input::placeholder, textarea::placeholder {
+              color: rgba(255,255,255,0.45);
+            }
+            input:focus, select:focus, textarea:focus {
+              outline: none;
+              border-color: rgba(123,92,241,0.6);
+              box-shadow: 0 0 0 3px rgba(123,92,241,0.18);
+              background: rgba(255,255,255,0.12);
+            }
+            button:hover:not(:disabled) {
+              transform: translateY(-2px);
+              box-shadow: 0 18px 40px rgba(123,92,241,0.45);
+            }
+            button:active:not(:disabled) {
+              transform: scale(0.97);
+            }
+            button:disabled {
+              cursor: not-allowed;
+            }
+            label {
+              display: block;
+              margin-top: 14px;
+              font-size: 13px;
+              font-weight: 600;
+              color: rgba(255,255,255,0.85);
+            }
+            @keyframes fadeUp {
+              from { opacity: 0; transform: translateY(18px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            @media (max-width: 900px) {
+              .grid { grid-template-columns: 1fr !important; }
+            }
+            @media print {
+              button { display: none; }
+            }
+          `}</style>
+        </form>
+      </div>
+    </section>
+  )
+}
+
+/* PAYMENT TAB */
+const PayTab = ({ label, active, onClick }) => (
+  <div
+    onClick={onClick}
+    style={{
+      padding: '12px',
+      borderRadius: 14,
+      textAlign: 'center',
+      fontWeight: 700,
+      cursor: 'pointer',
+      background: active
+        ? 'linear-gradient(135deg,#7b5cf1,#a884ff)'
+        : 'rgba(255,255,255,0.08)',
+      boxShadow: active
+        ? '0 10px 30px rgba(123,92,241,0.4)'
+        : 'inset 0 0 0 1px rgba(255,255,255,0.08)',
+      transition: 'all .25s ease'
+    }}
+  >
+    {label}
+  </div>
+)
+
+/* STYLES */
+const wrapper = {
+  minHeight: '100vh',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  background: 'linear-gradient(180deg,#f7f7fb,#ffffff)',
+  padding: 24
+}
+
+const grid = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 500px',
+  gap: 20,
+  maxWidth: 1200,
+  width: '100%',
+  className: 'grid'
+}
+
+const productCard = {
+  background: 'linear-gradient(180deg,#ffffff,#f7f7fb)',
+  padding: 22,
+  borderRadius: 20,
+  boxShadow: '0 18px 40px rgba(0,0,0,0.08)',
+  animation: 'fadeUp .6s ease'
+}
+
+const img = {
+  width: '100%',
+  height: 220,
+  objectFit: 'cover',
+  borderRadius: 16
+}
+
+const muted = { color: '#6b7280', marginTop: 6 }
+const row = { display: 'flex', justifyContent: 'space-between', marginTop: 8 }
+
+const payCard = {
+  background: 'linear-gradient(160deg,#1f1c28,#2a2436)',
+  padding: 26,
+  borderRadius: 22,
+  color: '#fff',
+  boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
+  backdropFilter: 'blur(14px)',
+  animation: 'fadeUp .6s ease'
+}
+
+const tabs = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(4,1fr)',
+  gap: 10,
+  margin: '16px 0'
+}
+
+const hint = { fontSize: 12, color: '#cfc9e8', marginTop: 6, lineHeight: 1.4 }
+const codBox = { 
+  padding: 16, 
+  borderRadius: 12, 
+  background: 'rgba(168, 132, 255, 0.1)', 
+  border: '1px solid rgba(168, 132, 255, 0.3)',
+  marginTop: 10 
+}
+const errorText = { 
+  color: '#ff6b6b', 
+  background: 'rgba(255, 107, 107, 0.1)',
+  padding: 12,
+  borderRadius: 10,
+  marginTop: 10,
+  fontSize: 13,
+  border: '1px solid rgba(255, 107, 107, 0.3)'
+}
+
+const payBtn = {
+  marginTop: 20,
+  width: '100%',
+  padding: 16,
+  borderRadius: 14,
+  background: 'linear-gradient(135deg,#7b5cf1,#a884ff)',
+  color: '#fff',
+  fontWeight: 900,
+  border: 'none',
+  cursor: 'pointer'
+}
+
+const secure = { marginTop: 14, fontSize: 12, textAlign: 'center', color: '#cfc9e8' }
+
+const successWrap = {
+  minHeight: '100vh',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  background: 'linear-gradient(180deg,#f7f7fb,#ffffff)',
+  padding: 24
+}
+
+const successCard = {
+  padding: 40,
+  borderRadius: 22,
+  textAlign: 'center',
+  boxShadow: '0 20px 60px rgba(123,92,241,0.2)',
+  background: '#fff',
+  maxWidth: 500,
+  animation: 'fadeUp .6s ease'
+}
+
+const check = { 
+  fontSize: 64, 
+  color: '#22c55e',
+  background: 'rgba(34, 197, 94, 0.1)',
+  width: 100,
+  height: 100,
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  margin: '0 auto 20px',
+  animation: 'checkScale .5s ease',
+  border: '3px solid #22c55e'
+}
+
+const primaryBtn = {
+  marginTop: 18,
+  padding: '14px 24px',
+  borderRadius: 12,
+  background: 'linear-gradient(135deg,#7b5cf1,#a884ff)',
+  color: '#fff',
+  border: 'none',
+  cursor: 'pointer',
+  fontWeight: 700,
+  fontSize: 15,
+  transition: 'all .25s ease',
+  flex: 1
+}

@@ -3,6 +3,8 @@ import s1 from "../../assets/sigin.jpg";
 import s2 from "../../assets/sigin2.jpg";
 import s3 from "../../assets/sigin3.jpg";
 import s4 from "../../assets/sigin4.jpg";
+import { useNavigate } from "react-router-dom";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 export default function Signin() {
 	const [slide, setSlide] = useState(0);
 	const images = [
@@ -10,6 +12,13 @@ export default function Signin() {
         s3,
         s4
        ];
+
+	const navigate = useNavigate();
+	const [first, setFirst] = useState("");
+	const [last, setLast] = useState("");
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
+	const [error, setError] = useState("");
 
 	useEffect(() => {
 		const t = setInterval(() => setSlide((s) => (s + 1) % images.length), 5000);
@@ -192,23 +201,48 @@ export default function Signin() {
 						Already have an account? <a href="/login" style={{ color: "#cbbafc" }}>Log in</a>
 					</p>
 
-					<div style={formRow}>
-						<input style={inputStyle} placeholder="First name" />
-						<input style={inputStyle} placeholder="Last name" />
-					</div>
+					<form onSubmit={(e) => {
+						e.preventDefault();
+						setError("");
+						(async () => {
+							try {
+								const name = `${first} ${last}`.trim();
+								const res = await fetch(`${API}/api/auth/signup`, {
+									method: 'POST',
+									headers: { 'Content-Type': 'application/json' },
+									body: JSON.stringify({ name, email, password })
+								});
+								const data = await res.json();
+																if (!res.ok) return setError(data.error || 'Signup failed');
+																// show email send status to user
+																if (data.email) {
+																	if (data.email.ok) alert('Welcome email sent to ' + (email));
+																	else alert('Welcome email failed: ' + (data.email.error || 'unknown'));
+																}
+																localStorage.setItem('token', data.token);
+																navigate('/home');
+							} catch (err) {
+								setError('Network error');
+							}
+						})();
+					}}>
+						<div style={formRow}>
+							<input value={first} onChange={(e) => setFirst(e.target.value)} style={inputStyle} placeholder="First name" />
+							<input value={last} onChange={(e) => setLast(e.target.value)} style={inputStyle} placeholder="Last name" />
+						</div>
 
-					<div style={{ marginTop: 14 }}>
-						<input style={inputStyle} placeholder="Email" />
-					</div>
+						<div style={{ marginTop: 14 }}>
+							<input value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} placeholder="Email" />
+						</div>
 
-					<div style={{ marginTop: 14, position: "relative" }}>
-						<input style={inputStyle} placeholder="Enter your password" type="password" />
-						<span style={{ position: "absolute", right: 16, top: 16, color: "#9c95b1" }}></span>
-					</div>
+						<div style={{ marginTop: 14, position: "relative" }}>
+							<input value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} placeholder="Enter your password" type="password" />
+							<span style={{ position: "absolute", right: 16, top: 16, color: "#9c95b1" }}></span>
+						</div>
+						{error && <div style={{ color: '#ffb4b4', marginTop: 10 }}>{error}</div>}
 
-					
-
-					<button style={primaryBtn}>Create account</button>
+						<button type="submit" style={primaryBtn}>Create account</button>
+					</form>
 
 					<div style={sepRow}>
 						<div style={line} />

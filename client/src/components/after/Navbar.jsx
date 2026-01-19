@@ -50,18 +50,6 @@ export default function Header() {
     padding: "0 48px"
   }
 
-  // LEFT side ABC company
- const leftLabelStyle = {
-  position: "absolute",
-  left: "48px",
-  top: "50%",
-  transform: "translateY(-50%)",
-  color: "#ffffff",
-  fontWeight: 700,
-  fontSize: "2.5rem",
-  letterSpacing: "0.5px"
-}
-
   // RIGHT side hero text
   const heroTextContainerStyle = {
     maxWidth: "500px",
@@ -137,7 +125,7 @@ export default function Header() {
     left: "48px",
     top: "50%",
     transform: "translateY(-50%)",
-    fontFamily: "'Nunito', 'M PLUS Rounded 1c', sans-serif",
+    fontFamily: "'Cinzel', 'Cormorant SC', serif",
     color: "#ffffff",
     fontWeight: 900,
     fontSize: "2.8rem",
@@ -161,9 +149,7 @@ export default function Header() {
             Great fabric is the foundation of great design
           </p>
 
-          <button style={enquireButtonStyle}><Link to="/login" style={{ textDecoration: "none", color: "inherit", display: "inline-block" }}>
-                                Enquire Now
-                            </Link></button>
+          <button style={enquireButtonStyle} onClick={() => document.getElementById('buy')?.scrollIntoView({ behavior: 'smooth' })}>Buy Now</button>
         </div>
       </div>
     </>

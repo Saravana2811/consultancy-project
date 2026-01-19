@@ -3,7 +3,8 @@ import s1 from "../../assets/sigin.jpg";
 import s2 from "../../assets/sigin2.jpg";
 import s3 from "../../assets/sigin3.jpg";
 import s4 from "../../assets/sigin4.jpg";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 export default function Login() {
   const [slide, setSlide] = useState(0);
   const images = [
@@ -11,6 +12,11 @@ export default function Login() {
     s3,
     s4
   ];
+
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const t = setInterval(() => setSlide((s) => (s + 1) % images.length), 5000);
@@ -174,14 +180,39 @@ export default function Login() {
             New here? <a href="/signin" style={{ color: "#cbbafc" }}>Create an account</a>
           </p>
 
-          <div style={{ marginTop: 14 }}>
-            <input style={inputStyle} placeholder="Email" />
-          </div>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            setError("");
+            (async () => {
+              try {
+                const res = await fetch(`${API}/api/auth/login`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (!res.ok) return setError(data.error || 'Login failed');
+                // show email send status to user
+                if (data.email) {
+                  if (data.email.ok) alert('Welcome email sent to ' + (data.email.info && data.email.info.accepted ? data.email.info.accepted.join(', ') : email));
+                  else alert('Welcome email failed: ' + (data.email.error || 'unknown'));
+                }
+                localStorage.setItem('token', data.token);
+                navigate('/home');
+              } catch (err) {
+                setError('Network error');
+              }
+            })();
+          }}>
+            <div style={{ marginTop: 14 }}>
+              <input value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} placeholder="Email" />
+            </div>
 
-          <div style={{ marginTop: 14, position: "relative" }}>
-            <input style={inputStyle} placeholder="Enter your password" type="password" />
-            <span style={{ position: "absolute", right: 16, top: 16, color: "#9c95b1" }}></span>
-          </div>
+            <div style={{ marginTop: 14, position: "relative" }}>
+              <input value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} placeholder="Enter your password" type="password" />
+              <span style={{ position: "absolute", right: 16, top: 16, color: "#9c95b1" }}></span>
+            </div>
+            {error && <div style={{ color: '#ffb4b4', marginTop: 10 }}>{error}</div>}
 
           <div style={checkboxRow}>
             <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -190,9 +221,7 @@ export default function Login() {
             <a href="#" style={{ color: "#cbbafc" }}>Forgot password?</a>
           </div>
 
-          <button style={primaryBtn}><Link to="/home" style={{ textDecoration: "none", color: "inherit", display: "inline-block" }}>
-                          LogIn
-                        </Link></button>
+          <button type="submit" style={primaryBtn}>LogIn</button>
 
           <div style={sepRow}>
             <div style={line} />
@@ -208,6 +237,7 @@ export default function Login() {
               <span>🍎</span> Apple
             </button>
           </div>
+          </form>
         </div>
       </div>
 

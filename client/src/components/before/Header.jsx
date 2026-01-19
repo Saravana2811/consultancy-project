@@ -121,7 +121,7 @@ export default function Header() {
         <div style={infoSectionStyle}>
           <span> +91-9443534549</span>
           <span style={infoDividerStyle}>|</span>
-          <span> websupport@justdial.com</span>
+          <span> prematextilemills@gmail.com</span>
           <span style={infoDividerStyle}>|</span>
           <button className="primary-btn" style={primaryBtn} type="button">
 							<Link to="/login" style={{ textDecoration: "none", color: "inherit", display: "inline-block" }}>
@@ -135,8 +135,24 @@ export default function Header() {
       <div style={heroStyle}>
 
         {/* LEFT SIDE LABEL */}
-        <span style={leftLabelStyle}>Prema Textile Mills</span>
-
+        <span
+  style={{
+    position: "absolute",
+    left: "48px",
+    top: "50%",
+    transform: "translateY(-50%)",
+    fontFamily: "'DM Serif Display', 'Libre Baskerville', serif",
+    color: "#ffffff",
+    fontWeight: 900,
+    fontSize: "2.8rem",
+    letterSpacing: "1px",
+   
+    WebkitFontSmoothing: "antialiased",
+    MozOsxFontSmoothing: "grayscale"
+  }}
+>
+  Prema Textile Mills
+</span>
         {/* RIGHT SIDE TEXT */}
         <div style={heroTextContainerStyle}>
           <h1 style={heroTitleStyle}>

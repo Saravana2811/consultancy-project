@@ -1,11 +1,13 @@
 import React from "react";
+import p2 from "../../assets/photo2.jpg";
+import p3 from "../../assets/photo3.jpg"; 
 
 export default function Wedo() {
   const images = [
-    "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=800&q=60",
-    "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=800&q=60",
-    "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=800&q=60",
-    "https://images.unsplash.com/photo-1520975919411-3a9f29b5f3c8?auto=format&fit=crop&w=800&q=60"
+    { src: p2, alt: '220gram-1st Quality(1m)' },
+    { src: p3, alt: '220gram-2nd Quality(1m)' },
+    { src: p2, alt: '250gram(1m)' },
+    { src: p3, alt: '200gram(1m)' },
   ];
 
   return (
@@ -37,7 +39,7 @@ export default function Wedo() {
           alignItems: "start"
         }}
       >
-        {images.map((src, i) => (
+        {images.map((item, i) => (
           <div
             key={i}
             style={{
@@ -45,21 +47,26 @@ export default function Wedo() {
               overflow: "hidden",
               background: "#fff",
               boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-              height: 140,
               display: "flex",
-              alignItems: "stretch"
+              flexDirection: "column"
             }}
           >
-            <img
-              src={src}
-              alt={`fabric ${i + 1}`}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block"
-              }}
-            />
+            <div style={{ height: 140, display: 'flex', alignItems: 'stretch' }}>
+              <img
+                src={item.src}
+                alt={item.alt}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block"
+                }}
+              />
+            </div>
+            <div style={{ padding: 10, background: '#fff' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{item.alt}</div>
+              <div style={{ marginTop: 6, fontSize: 13, color: '#4b5563' }}>{item.desc}</div>
+            </div>
           </div>
         ))}
       </div>

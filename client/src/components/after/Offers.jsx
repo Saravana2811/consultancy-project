@@ -1,0 +1,106 @@
+import React from "react";
+import "./Offers.css";
+
+export default function Offers() {
+    const offers = [
+        {
+            id: 1,
+            title: "First Order Discount",
+            discount: "15% OFF",
+            code: "FIRST15",
+            description: "Get 15% off on your first purchase",
+            minOrder: 299,
+            expiryDays: 7,
+            color: "#d4a574",
+            icon: "🎁"
+        },
+        {
+            id: 2,
+            title: "Bulk Buy Offer",
+            discount: "20% OFF",
+            code: "BULK20",
+            description: "Order 5+ items and save 20%",
+            minOrder: 1500,
+            expiryDays: 15,
+            color: "#6366f1",
+            icon: "📦"
+        },
+        {
+            id: 3,
+            title: "Premium Offer",
+            discount: "25% OFF",
+            code: "BULK50",
+            description: "Exclusive for premium members",
+            minOrder: 500,
+            expiryDays: 30,
+            color: "#75c6ecff",
+            icon: "👑"
+        },
+    ];
+
+    // Show only first 3 offers
+    const displayOffers = offers.slice(0, 3);
+
+    return (
+        <section className="offers-section">
+            <div className="offers-container">
+                {/* Header Section */}
+                <div className="offers-header">
+                    <h2 className="offers-title">
+                        <span className="offers-icon">🎁</span>
+                        Special Offers For You!
+                    </h2>
+                    <p className="offers-subtitle">
+                        Save more on your purchase with exclusive deals
+                    </p>
+                </div>
+
+                {/* Offers Grid */}
+                <div className="offers-grid">
+                    {displayOffers.map((offer) => (
+                        <div 
+                            key={offer.id}
+                            className="offer-card"
+                            style={{ '--offer-color': offer.color }}
+                        >
+                            <div className="offer-badge" style={{ background: offer.color }}>
+                                <span className="offer-icon-large">{offer.icon}</span>
+                                <span className="offer-discount">{offer.discount}</span>
+                            </div>
+                            
+                            <div className="offer-content">
+                                <h3 className="offer-title">{offer.title}</h3>
+                                <p className="offer-description">{offer.description}</p>
+                                
+                                <div className="offer-details">
+                                    <div className="offer-detail-item">
+                                        <span className="detail-label">Code:</span>
+                                        <span className="detail-value code">{offer.code}</span>
+                                    </div>
+                                    <div className="offer-detail-item">
+                                        <span className="detail-label">Min Order:</span>
+                                        <span className="detail-value">₹{offer.minOrder}</span>
+                                    </div>
+                                    <div className="offer-detail-item">
+                                        <span className="detail-label">Valid for:</span>
+                                        <span className="detail-value">{offer.expiryDays} days</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Info Banner */}
+                <div className="info-banner">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                        <path d="M12 16v-4M12 8h.01" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    <span>Exclusive offers available for all customers • Limited time deals</span>
+                </div>
+            </div>
+        </section>
+    );
+}
+

@@ -1,0 +1,58 @@
+.home-video-wrap {
+  position: relative;
+  overflow: hidden;
+}
+.home-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none;
+}
+.home-video-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.28);
+  z-index: 1;
+  pointer-events: none;
+}
+.home-content {
+  position: relative;
+  z-index: 2; /* ensure wrapped sections render above the video */
+}
+
+/* Small screens: reduce overlay to keep contrast comfortable */
+@media (max-width: 820px) {
+  .home-video-overlay { background: rgba(0,0,0,0.36); }
+}
+
+/* keep site sections outside the video wrapper stacked normally */
+.site-content { position: relative; z-index: 2; }
+
+/* Inline video section (section-level, not full-page) */
+.inline-video-section {
+  position: relative;
+  margin: 36px auto;
+  max-width: 1200px;
+  height: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.inline-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.inline-video-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.22);
+  pointer-events: none;
+}
+
+@media (max-width: 820px) {
+  .inline-video-section { height: 300px; }
+}

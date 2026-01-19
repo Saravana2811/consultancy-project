@@ -132,7 +132,7 @@ export default function About() {
 				<div style={heroInner}>
 					<h1 style={heroTitle}>About Prema Textile Mills</h1>
 					<p style={heroSubtitle}>
-						We are a fabric-first company dedicated to quality, durability, and sustainable
+						We are a fabric company dedicated to quality, durability, and sustainable
 						practices. From sourcing premium materials to precision dyeing and finishing, our
 						team blends tradition and technology to deliver textiles you can trust.
 					</p>
@@ -156,8 +156,8 @@ export default function About() {
 								<p style={statLabel}>Industry Experience</p>
 							</div>
 							<div className="stat-card" style={statCard}>
-								<p style={statNumber}>1M+</p>
-								<p style={statLabel}>Meters Delivered</p>
+								<p style={statNumber}>99%</p>
+								<p style={statLabel}>Customer Satisfaction</p>
 							</div>
 							<div className="stat-card" style={statCard}>
 								<p style={statNumber}>98%</p>

@@ -3,10 +3,10 @@
 :root {
   --step-fg: inherit;
   --step-muted: #78839a;
-  --step-brand: #4f7cff;
-  --step-brand-2: #7c4fff;
+  --step-brand: #f8a517;
+  --step-brand-2: #242327;
   --step-card-bg: rgba(255,255,255,0.06);
-  --step-card-border: rgba(0,0,0,0.08);
+  --step-card-border: rgba(224, 27, 27, 0.08);
 }
 
 .step {
@@ -126,6 +126,8 @@
 
 .step-progress-bar {
   position: absolute;
+  display: flex; /* Added for centering */
+  justify-content: center; /* Added for centering */
   inset: 0;
   width: 0%;
   background: linear-gradient(90deg, var(--step-brand), var(--step-brand-2));
@@ -156,3 +158,24 @@
   .step-item.left .step-dot,
   .step-item.right .step-dot { grid-column: 1 / 2; }
 }
+
+/* Steps header centering */
+.steps-section {
+  position: relative;
+  padding: 48px 20px;
+  background: transparent;
+  color: var(--step-fg);
+}
+
+.steps-header {
+  max-width: 980px;
+  margin: 0 auto 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.steps-title { font-size: clamp(26px, 4vw, 36px); font-weight: 800; }
+.steps-subtitle { margin-top: 8px; color: var(--step-muted); }

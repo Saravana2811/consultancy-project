@@ -1,45 +1,43 @@
 import React from "react";
-
+import { useNavigate } from 'react-router-dom';
+import p3 from "../../assets/photo3.jpg";
+import p2 from "../../assets/photo2.jpg";
 export default function Buy() {
 	const products = [
 		{
 			id: 1,
-			title: "Premium Cotton Fabric",
+			title: "220gram-1st Quality",
 			desc: "Soft, breathable, and ideal for everyday wear.",
 			price: 399,
 			rating: 4.7,
-			image:
-				"https://images.unsplash.com/photo-1605733160314-4f53a220c581?auto=format&fit=crop&w=1200&q=60",
-			tag: "Best Seller"
+			image: p3,
+				tag: "Best Seller"
 		},
 		{
 			id: 2,
-			title: "Classic Denim",
+			title: "220gram-2nd Quality",
 			desc: "Durable twill weave with rich indigo tone.",
 			price: 549,
 			rating: 4.6,
-			image:
-				"https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=60",
+			image: p2,
 			tag: "New"
 		},
 		{
 			id: 3,
-			title: "Lightweight Linen",
+			title: "250gram",
 			desc: "Cool, airy fabric perfect for warm climates.",
 			price: 629,
 			rating: 4.5,
-			image:
-				"https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&w=1200&q=60",
+			image: p2,
 			tag: "Eco"
 		},
 		{
 			id: 4,
-			title: "Merino Wool Blend",
+			title: "200gram",
 			desc: "Soft touch with excellent temperature regulation.",
 			price: 799,
 			rating: 4.8,
-			image:
-				"https://images.unsplash.com/photo-1542831371-39b3dad4b8a5?auto=format&fit=crop&w=1200&q=60",
+			image: p3,
 			tag: "Limited"
 		}
 	];
@@ -134,12 +132,15 @@ export default function Buy() {
 		flex: 1
 	};
 
+	const navigate = useNavigate();
+
 	const onBuy = (p) => {
-		alert(`Buying: ${p.title} - Rs.${p.price}`);
+		// navigate to payment page and pass product in location state
+		navigate('/payment', { state: { product: p } });
 	};
 
 	return (
-		<section style={section} aria-label="Buy Now">
+		<section id="buy" style={section} aria-label="Buy Now">
 			<div style={header}>
 				<h2 style={title}>Buy Now</h2>
 				
@@ -170,6 +171,7 @@ export default function Buy() {
 			</div>
 
 			<style>{`
+				html { scroll-behavior: smooth; }
 				.buy-card { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
 				.buy-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.12); }
 				.buy-primary:hover { filter: brightness(1.05); }

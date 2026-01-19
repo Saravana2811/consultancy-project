@@ -1,0 +1,84 @@
+.location-section {
+  padding: 48px 20px;
+  /* Section-only background image. Put your file at `public/images/location-bg.jpg` */
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+  color: #111;
+}
+.location-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+  position: relative;
+  z-index: 2; /* keep content above the overlay */
+}
+
+/* no overlay — section background is transparent */
+.location-title {
+  font-size: clamp(20px, 3vw, 28px);
+  margin: 0 0 6px;
+  font-weight: 800;
+}
+
+.location-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
+}
+.location-card h3 { margin: 0 0 8px; }
+.location-card p { margin: 6px 0; color: #444; }
+.location-hours { margin-top: 10px; display:flex; gap:8px; align-items:center; color:#333 }
+.location-cta {
+  display: inline-block;
+  margin-top: 12px;
+  background: #0b74de;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+.location-map iframe {
+  width: 100%;
+  min-height: 260px;
+  height: 100%;
+  border: 0;
+  border-radius: 12px;
+}
+
+@media (max-width: 820px) {
+  .location-inner { grid-template-columns: 1fr; }
+  .location-map iframe { min-height: 220px; }
+}
+
+/* Prevent interactions inside the iframe and remove in-iframe popups
+   by intercepting pointer events with an overlay. The overlay provides
+   a single CTA that opens the map in a new tab. */
+.map-container { position: relative; border-radius: 12px; overflow: hidden; }
+.map-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.0), rgba(255,255,255,0.02));
+  pointer-events: auto;
+}
+.map-overlay::before { content: '' ; position:absolute; inset:0; }
+.map-overlay a.overlay-cta {
+  position: relative;
+  z-index: 2;
+  background: #0b74de;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  box-shadow: 0 6px 18px rgba(11,116,222,0.12);
+}
+
+/* Make overlay cover the iframe so clicks don't reach it */
+.map-container iframe { pointer-events: none; }
