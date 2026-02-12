@@ -11,7 +11,7 @@ export default function Offers() {
             description: "Get 15% off on your first purchase",
             minOrder: 299,
             expiryDays: 7,
-            color: "#d4a574",
+            color: "#dd551f",
             icon: "🎁"
         },
         {
@@ -22,7 +22,7 @@ export default function Offers() {
             description: "Order 5+ items and save 20%",
             minOrder: 1500,
             expiryDays: 15,
-            color: "#6366f1",
+            color: "#4c6c51",
             icon: "📦"
         },
         {
@@ -33,7 +33,7 @@ export default function Offers() {
             description: "Exclusive for premium members",
             minOrder: 500,
             expiryDays: 30,
-            color: "#75c6ecff",
+            color: "rgb(61, 80, 88)",
             icon: "👑"
         },
     ];
@@ -47,7 +47,7 @@ export default function Offers() {
                 {/* Header Section */}
                 <div className="offers-header">
                     <h2 className="offers-title">
-                        <span className="offers-icon">🎁</span>
+                        <span className="offers-icon"></span>
                         Special Offers For You!
                     </h2>
                     <p className="offers-subtitle">
@@ -92,13 +92,7 @@ export default function Offers() {
                 </div>
 
                 {/* Info Banner */}
-                <div className="info-banner">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <circle cx="12" cy="12" r="10" strokeWidth="2"/>
-                        <path d="M12 16v-4M12 8h.01" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                    <span>Exclusive offers available for all customers • Limited time deals</span>
-                </div>
+                
             </div>
         </section>
     );

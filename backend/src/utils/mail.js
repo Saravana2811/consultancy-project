@@ -12,38 +12,60 @@ const {
 
 async function createTransporter() {
   if (!SMTP_USER || !SMTP_PASS) {
-    console.warn('SMTP credentials missing — email disabled');
+    console.warn('⚠️  SMTP credentials missing — email disabled');
     return null;
   }
+  
   const port = Number(SMTP_PORT);
   const isSecure = port === 465;
   const isGmail =
     SMTP_HOST === 'smtp.gmail.com' || SMTP_USER.endsWith('@gmail.com');
+  
   const transportConfig = {
     ...(isGmail
       ? { service: 'gmail' }
-      : { host: SMTP_HOST }),
-    port,
-    secure: isSecure,
+      : { host: SMTP_HOST, port }),
     auth: {
       user: SMTP_USER,
       pass: SMTP_PASS
     },
-    ...(isSecure ? {} : { requireTLS: true }),
+    secure: isSecure,
     tls: {
       rejectUnauthorized: false,
       minVersion: 'TLSv1.2'
     },
     connectionTimeout: 10000,
-    greetingTimeout: 10000
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
+    pool: true,
+    maxConnections: 5,
+    rateLimit: 5
   };
+  
   const t = nodemailer.createTransport(transportConfig);
+  
   try {
+    console.log(`🔄 Verifying SMTP connection to ${isGmail ? 'Gmail' : SMTP_HOST}:${port}...`);
     await t.verify();
-    console.log('✅ SMTP transporter verified');
+    console.log('✅ SMTP transporter verified successfully');
     return t;
   } catch (err) {
     console.error('❌ SMTP verification failed:', err?.message || err);
+    console.error('💡 Troubleshooting tips:');
+    if (isGmail) {
+      console.error('   • Ensure you are using an App Password (not your regular Gmail password)');
+      console.error('   • Enable 2-Step Verification in your Google Account');
+      console.error('   • Create an App Password at: https://myaccount.google.com/apppasswords');
+      console.error('   • Check if "Less secure app access" is enabled (if not using App Password)');
+    } else {
+      console.error(`   • Verify SMTP host: ${SMTP_HOST}`);
+      console.error(`   • Verify SMTP port: ${port}`);
+      console.error('   • Check firewall/network settings');
+    }
+    console.error(`   • Current SMTP_USER: ${SMTP_USER}`);
+    console.error(`   • Current SMTP_PORT: ${port} (secure: ${isSecure})`);
+    console.error('   • Verify SMTP credentials are correct\n');
+    console.warn('⚠️  Email functionality will be disabled. Application will continue without email.');
     return null;
   }
 }

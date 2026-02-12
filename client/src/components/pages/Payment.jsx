@@ -1,6 +1,26 @@
 import React, { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import catalogImg from '../../assets/photo4.jpg'
+import { Button } from '../ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
+import { Input } from '../ui/input'
+import { Textarea } from '../ui/textarea'
+import { Label } from '../ui/label'
+import { Badge } from '../ui/badge'
+import { 
+  CreditCard, 
+  Smartphone, 
+  Building, 
+  Banknote,
+  CheckCircle2,
+  Package,
+  MapPin,
+  Palette,
+  Truck,
+  Tag,
+  Home,
+  AlertCircle
+} from 'lucide-react'
 
 export default function Payment() {
   const { state } = useLocation()
@@ -35,11 +55,9 @@ export default function Payment() {
   const [discount, setDiscount] = useState(0)
   const [orderId, setOrderId] = useState('')
 
-  // Price per meter (you can adjust this)
   const pricePerMeter = 45
   const deliveryCharge = lengthMeters && Number(lengthMeters) >= 5000 ? 0 : 299
 
-  // Calculate totals
   const calculateSubtotal = () => {
     const length = Number(lengthMeters) || 0
     return length * pricePerMeter
@@ -51,13 +69,9 @@ export default function Payment() {
     return subtotal - discountAmount + deliveryCharge
   }
 
-  // Apply promo code
   const applyPromo = () => {
     const code = promoCode.toUpperCase()
-    if (code === 'TEXTILE10') {
-      setDiscount(10)
-      setError('')
-    } else if (code === 'FIRSTORDER') {
+    if (code === 'TEXTILE10' || code === 'FIRSTORDER') {
       setDiscount(10)
       setError('')
     } else if (code === 'BULK20') {
@@ -69,12 +83,10 @@ export default function Payment() {
     }
   }
 
-  // Generate order ID
   const generateOrderId = () => {
     return 'PTM' + Date.now().toString().slice(-8)
   }
 
-  // Get estimated delivery date
   const getDeliveryDate = () => {
     const date = new Date()
     date.setDate(date.getDate() + 7)
@@ -144,7 +156,11 @@ export default function Payment() {
         paymentMethod: method.toUpperCase()
       }
 
-      // Call backend API to send bill email
+      console.log('Sending bill with quantity reduction:', {
+        productId: product._id || product.id,
+        quantityPurchased: lengthVal
+      })
+
       fetch('http://localhost:5000/api/send-bill', {
         method: 'POST',
         headers: {
@@ -152,19 +168,21 @@ export default function Payment() {
         },
         body: JSON.stringify({
           email: email,
-          orderDetails: orderDetails
+          orderDetails: orderDetails,
+          productId: product._id || product.id,
+          quantityPurchased: lengthVal
         })
       })
         .then(res => res.json())
         .then(data => {
           if (data.ok) {
-            console.log('Bill email sent successfully')
+            console.log('✅ Bill email sent successfully and quantity updated')
           } else {
-            console.error('Failed to send bill email:', data.error)
+            console.error('❌ Failed to send bill email:', data.error)
           }
         })
         .catch(err => {
-          console.error('Error sending bill email:', err)
+          console.error('❌ Error sending bill email:', err)
         })
     } catch (err) {
       console.error('Error preparing bill email:', err)
@@ -178,546 +196,467 @@ export default function Payment() {
 
   if (success) {
     return (
-      <section style={successWrap}>
-        <div style={successCard}>
-          <div style={check}>✓</div>
-          <h2>Order Placed Successfully!</h2>
-          <div style={{ fontSize: 14, color: '#6b7280', marginTop: 8 }}>
-            Order ID: <strong style={{ color: '#7b5cf1' }}>{orderId}</strong>
-          </div>
-          <div style={{ marginTop: 20, textAlign: 'left', background: '#f9fafb', padding: 16, borderRadius: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span>Product:</span>
-              <strong>{product.title}</strong>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+        <Card className="max-w-2xl w-full shadow-2xl">
+          <CardContent className="p-8 md:p-12 text-center space-y-6">
+            <div className="w-24 h-24 mx-auto bg-green-100 rounded-full flex items-center justify-center border-4 border-green-500 animate-pulse">
+              <CheckCircle2 className="w-12 h-12 text-green-600" />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span>Length:</span>
-              <strong>{lengthMeters} meters</strong>
+            
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold text-slate-800">Order Placed Successfully!</h2>
+              <div className="text-sm text-slate-600">
+                Order ID: <Badge className="text-base font-mono bg-purple-600">{orderId}</Badge>
+              </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span>Colors:</span>
-              <strong>{selectedColorNumbers}</strong>
+            
+            <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
+              <CardContent className="p-6 space-y-3 text-left">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-slate-600">Product:</span>
+                  <strong className="text-slate-800">{product.title}</strong>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Length:</span>
+                  <strong className="text-slate-800">{lengthMeters} meters</strong>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Colors:</span>
+                  <strong className="text-slate-800">{selectedColorNumbers}</strong>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600">Delivery to:</span>
+                  <strong className="text-slate-800">{fullName}</strong>
+                </div>
+                <div className="flex justify-between font-bold text-lg pt-3 border-t-2 border-slate-300">
+                  <span>Total Paid:</span>
+                  <span className="text-green-600">₹{calculateTotal().toLocaleString()}</span>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <div className="flex items-center justify-center gap-2 p-4 bg-blue-50 rounded-lg text-sm text-blue-800">
+              <Truck className="w-5 h-5" />
+              <span>Estimated Delivery: <strong>{getDeliveryDate()}</strong></span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span>Delivery to:</span>
-              <strong>{fullName}</strong>
+            
+            <div className="flex gap-3 pt-4">
+              <Button 
+                onClick={() => window.print()} 
+                className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
+              >
+                <Package className="w-4 h-4 mr-2" />
+                Download Invoice
+              </Button>
+              <Button 
+                onClick={() => navigate('/home')} 
+                variant="outline"
+                className="flex-1 border-2 bg-slate-600 text-white hover:bg-slate-700"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Back to Home
+              </Button>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: 12, paddingTop: 12, borderTop: '2px solid #e5e7eb' }}>
-              <span>Total Paid:</span>
-              <span style={{ color: '#22c55e' }}>₹{calculateTotal().toLocaleString()}</span>
-            </div>
-          </div>
-          <div style={{ marginTop: 16, padding: 12, background: '#eff6ff', borderRadius: 10, fontSize: 14 }}>
-            📦 Estimated Delivery: <strong>{getDeliveryDate()}</strong>
-          </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-            <button style={primaryBtn} onClick={() => window.print()}>
-              📄 Download Invoice
-            </button>
-            <button style={{...primaryBtn, background: '#6b7280'}} onClick={() => navigate('/home')}>
-              🏠 Back to Home
-            </button>
-          </div>
-        </div>
-      </section>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   return (
-    <section style={wrapper}>
-      <div style={grid}>
-
-        {/* LEFT — PRODUCT SUMMARY */}
-        <div style={productCard}>
-          <img src={product.image} alt={product.title} style={img} />
-          <h3>{product.title}</h3>
-          <p style={muted}>{product.desc}</p>
-
-          <img
-            src={catalogImg}
-            alt="Color Catalog"
-            onClick={() => window.open(catalogImg, '_blank')}
-            style={{ width: '100%', borderRadius: 12, marginTop: 12, marginBottom: 12, cursor: 'pointer', border: '2px solid #e5e7eb' }}
-            title="Click to view full size"
-          />
-          <div style={{ fontSize: 13, color: '#7b5cf1', textAlign: 'center', marginBottom: 16 }}>
-            👆 Click to view color catalog
-          </div>
-
-          <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
-
-          <div style={{ background: '#f9fafb', padding: 14, borderRadius: 12, marginBottom: 16 }}>
-            <h4 style={{ marginBottom: 10, fontSize: 15 }}>Order Summary</h4>
-            <div style={row}>
-              <span>Price per meter</span>
-              <span>₹{pricePerMeter}</span>
-            </div>
-            <div style={row}>
-              <span>Length</span>
-              <span>{lengthMeters || 0} meters</span>
-            </div>
-            <div style={row}>
-              <span>Subtotal</span>
-              <span>₹{calculateSubtotal().toLocaleString()}</span>
-            </div>
-            {discount > 0 && (
-              <div style={{ ...row, color: '#22c55e' }}>
-                <span>Discount ({discount}%)</span>
-                <span>-₹{((calculateSubtotal() * discount) / 100).toLocaleString()}</span>
-              </div>
-            )}
-            
-            {deliveryCharge === 0 && (
-              <div style={{ fontSize: 12, color: '#22c55e', marginTop: 4 }}>
-                🎉 Free delivery on orders ≥ 5000m
-              </div>
-            )}
-            <div style={{ ...row, fontWeight: 800, fontSize: 18, marginTop: 12, paddingTop: 12, borderTop: '2px solid #e5e7eb' }}>
-              <span>Total</span>
-              <span style={{ color: '#7b5cf1' }}>₹{calculateTotal().toLocaleString()}</span>
-            </div>
-          </div>
-
-          <div style={{ fontSize: 13, color: '#6b7280', background: '#eff6ff', padding: 12, borderRadius: 10 }}>
-            📦 Estimated Delivery: <strong>{getDeliveryDate()}</strong>
-          </div>
-        </div>
-
-        {/* RIGHT — PAYMENT */}
-        <form onSubmit={handlePay} style={payCard}>
-          <h3>Secure Checkout</h3>
-
-          {/* DELIVERY DETAILS */}
-          <div style={{ marginTop: 20 }}>
-            <h4 style={{ fontSize: 16, marginBottom: 12, color: '#a884ff' }}>📍 Delivery Details</h4>
-            
-            <label>Full Name *</label>
-            <input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Enter your full name"
-            />
-
-            <label>Phone Number *</label>
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-              placeholder="10-digit number"
-            />
-
-            <label style={{ marginTop: 12 }}>GST Number *</label>
-            <input
-              value={gstNumber}
-              onChange={(e) => setGstNumber(e.target.value.toUpperCase().slice(0, 15))}
-              placeholder="15-digit GST number"
-            />
-
-            <label style={{ marginTop: 12 }}>Address *</label>
-            <textarea
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="House/Flat no, Building, Street"
-              rows="2"
-            />
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* LEFT — PRODUCT SUMMARY */}
+          <Card className="h-fit shadow-xl border-2">
+            <CardHeader>
+              <CardTitle className="text-2xl">{product.title}</CardTitle>
+              <p className="text-slate-600">{product.desc}</p>
+            </CardHeader>
+            <CardContent className="space-y-6">
               <div>
-                <label>City *</label>
-                <input
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="City"
+                <img
+                  src={catalogImg}
+                  alt="Color Catalog"
+                  onClick={() => window.open(catalogImg, '_blank')}
+                  className="w-full rounded-xl cursor-pointer border-2 border-slate-200 hover:border-purple-400 transition-all"
+                  title="Click to view full size"
                 />
+                <div className="text-sm text-purple-600 text-center mt-3 font-medium">
+                  👆 Click to view color catalog
+                </div>
               </div>
-              <div>
-                <label>State *</label>
-                <input
-                  value={deliveryState}
-                  onChange={(e) => setDeliveryState(e.target.value)}
-                  placeholder="State"
-                />
+
+              <div className="border-t pt-6">
+                <Card className="bg-gradient-to-br from-slate-50 to-slate-100">
+                  <CardContent className="p-5 space-y-3">
+                    <h4 className="font-semibold text-lg mb-4">Order Summary</h4>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">Price per meter</span>
+                      <span className="font-medium">₹{pricePerMeter}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">Length</span>
+                      <span className="font-medium">{lengthMeters || 0} meters</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">Subtotal</span>
+                      <span className="font-medium">₹{calculateSubtotal().toLocaleString()}</span>
+                    </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Discount ({discount}%)</span>
+                        <span className="font-medium">-₹{((calculateSubtotal() * discount) / 100).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {deliveryCharge === 0 && (
+                      <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                        🎉 Free delivery on orders ≥ 5000m
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold text-lg pt-3 border-t-2">
+                      <span>Total</span>
+                      <span className="text-purple-600">₹{calculateTotal().toLocaleString()}</span>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </div>
 
-            <label style={{ marginTop: 12 }}>Pincode *</label>
-            <input
-              value={pincode}
-              onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="6-digit pincode"
-            />
+              <div className="flex items-center gap-2 p-4 bg-blue-50 rounded-lg text-sm text-blue-800">
+                <Truck className="w-5 h-5" />
+                <span>Estimated Delivery: <strong>{getDeliveryDate()}</strong></span>
+              </div>
+            </CardContent>
+          </Card>
 
-            <label style={{ marginTop: 12 }}>Email (for receipt) *</label>
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@email.com"
-            />
-          </div>
+          {/* RIGHT — PAYMENT FORM */}
+          <Card className="shadow-xl border-2 bg-gradient-to-br from-slate-800 to-slate-900 text-white">
+            <CardHeader>
+              <CardTitle className="text-2xl">Secure Checkout</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePay} className="space-y-6">
+                {/* DELIVERY DETAILS */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold flex items-center gap-2 text-purple-300">
+                    <MapPin className="w-5 h-5" />
+                    Delivery Details
+                  </h4>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="text-white">Full Name *</Label>
+                    <Input
+                      id="fullName"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Enter your full name"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    />
+                  </div>
 
-          {/* ORDER DETAILS */}
-          <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <h4 style={{ fontSize: 16, marginBottom: 12, color: '#a884ff' }}>🎨 Order Details</h4>
-            
-            <label>Color Numbers (from catalog) *</label>
-            <input
-              value={selectedColorNumbers}
-              onChange={(e) => setSelectedColorNumbers(e.target.value)}
-              placeholder="e.g. 1001,1005,1010"
-            />
-            <div style={hint}>View catalog above and enter color numbers separated by commas</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-white">Phone Number *</Label>
+                      <Input
+                        id="phone"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        placeholder="10-digit number"
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      />
+                    </div>
 
-            <label style={{ marginTop: 12 }}>Length (meters) *</label>
-            <input
-              value={lengthMeters}
-              onChange={(e) => setLengthMeters(e.target.value.replace(/\D/g, ''))}
-              placeholder="Minimum 1000 meters"
-            />
-            <div style={hint}>Minimum order: 1000 meters • Free delivery on 5000+ meters</div>
+                    <div className="space-y-2">
+                      <Label htmlFor="gstNumber" className="text-white">GST Number *</Label>
+                      <Input
+                        id="gstNumber"
+                        value={gstNumber}
+                        onChange={(e) => setGstNumber(e.target.value.toUpperCase().slice(0, 15))}
+                        placeholder="15-digit GST"
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      />
+                    </div>
+                  </div>
 
-            {/* PROMO CODE */}
-            <div style={{ marginTop: 16 }}>
-              <label>Promo Code</label>
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <input
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  placeholder="Enter code"
-                  style={{ flex: 1 }}
-                />
-                <button
-                  type="button"
-                  onClick={applyPromo}
-                  style={{
-                    padding: '0 20px',
-                    borderRadius: 12,
-                    background: 'rgba(168, 132, 255, 0.2)',
-                    color: '#a884ff',
-                    border: '1px solid #a884ff',
-                    cursor: 'pointer',
-                    fontWeight: 600
-                  }}
+                  <div className="space-y-2">
+                    <Label htmlFor="address" className="text-white">Address *</Label>
+                    <Textarea
+                      id="address"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="House/Flat no, Building, Street"
+                      rows={2}
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="city" className="text-white">City *</Label>
+                      <Input
+                        id="city"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        placeholder="City"
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="deliveryState" className="text-white">State *</Label>
+                      <Input
+                        id="deliveryState"
+                        value={deliveryState}
+                        onChange={(e) => setDeliveryState(e.target.value)}
+                        placeholder="State"
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="pincode" className="text-white">Pincode *</Label>
+                      <Input
+                        id="pincode"
+                        value={pincode}
+                        onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        placeholder="6-digit"
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-white">Email (for receipt) *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@email.com"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    />
+                  </div>
+                </div>
+
+                {/* ORDER DETAILS */}
+                <div className="space-y-4 pt-4 border-t border-white/10">
+                  <h4 className="text-lg font-semibold flex items-center gap-2 text-purple-300">
+                    <Palette className="w-5 h-5" />
+                    Order Details
+                  </h4>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="colorNumbers" className="text-white">Color Numbers (from catalog) *</Label>
+                    <Input
+                      id="colorNumbers"
+                      value={selectedColorNumbers}
+                      onChange={(e) => setSelectedColorNumbers(e.target.value)}
+                      placeholder="e.g. 1001,1005,1010"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    />
+                    <p className="text-xs text-purple-300">View catalog above and enter color numbers separated by commas</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="lengthMeters" className="text-white">Length (meters) *</Label>
+                    <Input
+                      id="lengthMeters"
+                      value={lengthMeters}
+                      onChange={(e) => setLengthMeters(e.target.value.replace(/\D/g, ''))}
+                      placeholder="Minimum 1000 meters"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    />
+                    <p className="text-xs text-purple-300">Minimum order: 1000 meters • Free delivery on 5000+ meters</p>
+                  </div>
+
+                  {/* PROMO CODE */}
+                  <div className="space-y-2">
+                    <Label htmlFor="promoCode" className="text-white flex items-center gap-2">
+                      <Tag className="w-4 h-4" />
+                      Promo Code
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="promoCode"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                        placeholder="Enter code"
+                        className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      />
+                      <Button
+                        type="button"
+                        onClick={applyPromo}
+                        variant="outline"
+                        className="bg-purple-500/20 text-purple-300 border-purple-400 hover:bg-purple-500/30"
+                      >
+                        Apply
+                      </Button>
+                    </div>
+                    <p className="text-xs text-purple-300">💡 Try: TEXTILE10, FIRSTORDER, BULK20</p>
+                  </div>
+                </div>
+
+                {/* PAYMENT METHODS */}
+                <div className="space-y-4 pt-4 border-t border-white/10">
+                  <h4 className="text-lg font-semibold text-purple-300">Payment Method</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <Button
+                      type="button"
+                      onClick={() => setMethod('card')}
+                      variant={method === 'card' ? 'default' : 'outline'}
+                      className={method === 'card' ? 'bg-gradient-to-r from-purple-600 to-purple-700' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Card
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => setMethod('upi')}
+                      variant={method === 'upi' ? 'default' : 'outline'}
+                      className={method === 'upi' ? 'bg-gradient-to-r from-purple-600 to-purple-700' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                    >
+                      <Smartphone className="w-4 h-4 mr-2" />
+                      UPI
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => setMethod('net')}
+                      variant={method === 'net' ? 'default' : 'outline'}
+                      className={method === 'net' ? 'bg-gradient-to-r from-purple-600 to-purple-700' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                    >
+                      <Building className="w-4 h-4 mr-2" />
+                      Bank
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => setMethod('cod')}
+                      variant={method === 'cod' ? 'default' : 'outline'}
+                      className={method === 'cod' ? 'bg-gradient-to-r from-purple-600 to-purple-700' : 'bg-white/10 border-white/20 text-white hover:bg-white/20'}
+                    >
+                      <Banknote className="w-4 h-4 mr-2" />
+                      COD
+                    </Button>
+                  </div>
+                </div>
+
+                {/* CARD PAYMENT FIELDS */}
+                {method === 'card' && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="card" className="text-white">Card Number *</Label>
+                      <Input
+                        id="card"
+                        value={card}
+                        onChange={(e) =>
+                          setCard(e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim())
+                        }
+                        placeholder="xxxx xxxx xxxx xxxx"
+                        maxLength={19}
+                        className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="expiry" className="text-white">Expiry (MM/YY) *</Label>
+                        <Input
+                          id="expiry"
+                          value={cardExpiry}
+                          onChange={(e) => {
+                            let val = e.target.value.replace(/\D/g, '')
+                            if (val.length >= 2) val = val.slice(0, 2) + '/' + val.slice(2, 4)
+                            setCardExpiry(val)
+                          }}
+                          placeholder="MM/YY"
+                          maxLength={5}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="cvv" className="text-white">CVV *</Label>
+                        <Input
+                          id="cvv"
+                          type="password"
+                          value={cardCvv}
+                          onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                          placeholder="CVV"
+                          maxLength={4}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* UPI PAYMENT FIELDS */}
+                {method === 'upi' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="upi" className="text-white">UPI ID *</Label>
+                    <Input
+                      id="upi"
+                      value={upi}
+                      onChange={(e) => setUpi(e.target.value)}
+                      placeholder="name@upi"
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    />
+                    <p className="text-xs text-purple-300">GPay • PhonePe • Paytm • Amazon Pay</p>
+                  </div>
+                )}
+
+                {/* NET BANKING FIELDS */}
+                {method === 'net' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="bank" className="text-white">Select Bank *</Label>
+                    <select 
+                      id="bank"
+                      className="w-full p-3 rounded-md bg-white/10 border border-white/20 text-white"
+                    >
+                      <option className="text-slate-800">State Bank of India</option>
+                      <option className="text-slate-800">HDFC Bank</option>
+                      <option className="text-slate-800">ICICI Bank</option>
+                      <option className="text-slate-800">Axis Bank</option>
+                      <option className="text-slate-800">Punjab National Bank</option>
+                      <option className="text-slate-800">Bank of Baroda</option>
+                      <option className="text-slate-800">Kotak Mahindra Bank</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* COD INFO */}
+                {method === 'cod' && (
+                  <Card className="bg-purple-500/10 border-purple-400/30">
+                    <CardContent className="p-4 space-y-2">
+                      <div className="font-semibold text-purple-300">💵 Cash on Delivery</div>
+                      <div className="text-sm text-purple-200">Pay when product is delivered to your doorstep</div>
+                      <div className="text-xs text-purple-300 space-y-1">
+                        <div>✓ No online payment required</div>
+                        <div>✓ Pay after inspection</div>
+                        <div>✓ Additional ₹50 COD charge applies</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {error && (
+                  <Card className="bg-red-500/10 border-red-400/30">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 text-red-300">
+                        <AlertCircle className="w-5 h-5" />
+                        <span>{error}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <Button
+                  type="submit"
+                  disabled={processing}
+                  className="w-full py-6 text-lg font-bold bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:opacity-50"
                 >
-                  Apply
-                </button>
-              </div>
-              <div style={{ fontSize: 11, color: '#a884ff', marginTop: 6 }}>
-                💡 Try: TEXTILE10, FIRSTORDER, BULK20
-              </div>
-            </div>
-          </div>
-
-          {/* PAYMENT METHODS */}
-          <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <h4 style={{ fontSize: 16, marginBottom: 12, color: '#a884ff' }}>💳 Payment Method</h4>
-            <div style={tabs}>
-              <PayTab label="💳 Card" active={method === 'card'} onClick={() => setMethod('card')} />
-              <PayTab label="📱 UPI" active={method === 'upi'} onClick={() => setMethod('upi')} />
-              <PayTab label="🏦 Bank" active={method === 'net'} onClick={() => setMethod('net')} />
-              <PayTab label="🚚 COD" active={method === 'cod'} onClick={() => setMethod('cod')} />
-            </div>
-          </div>
-
-          {/* DYNAMIC FIELDS */}
-          {method === 'card' && (
-            <>
-              <label>Card Number *</label>
-              <input
-                value={card}
-                onChange={(e) =>
-                  setCard(e.target.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim())
-                }
-                placeholder="xxxx xxxx xxxx xxxx"
-                maxLength="19"
-              />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
-                <div>
-                  <label>Expiry (MM/YY) *</label>
-                  <input
-                    value={cardExpiry}
-                    onChange={(e) => {
-                      let val = e.target.value.replace(/\D/g, '')
-                      if (val.length >= 2) val = val.slice(0, 2) + '/' + val.slice(2, 4)
-                      setCardExpiry(val)
-                    }}
-                    placeholder="MM/YY"
-                    maxLength="5"
-                  />
-                </div>
-                <div>
-                  <label>CVV *</label>
-                  <input
-                    value={cardCvv}
-                    onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="CVV"
-                    maxLength="4"
-                    type="password"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {method === 'upi' && (
-            <>
-              <label>UPI ID *</label>
-              <input
-                value={upi}
-                onChange={(e) => setUpi(e.target.value)}
-                placeholder="name@upi"
-              />
-              <div style={hint}>GPay • PhonePe • Paytm • Amazon Pay</div>
-            </>
-          )}
-
-          {method === 'net' && (
-            <>
-              <label>Select Bank *</label>
-              <select>
-                <option>State Bank of India</option>
-                <option>HDFC Bank</option>
-                <option>ICICI Bank</option>
-                <option>Axis Bank</option>
-                <option>Punjab National Bank</option>
-                <option>Bank of Baroda</option>
-                <option>Kotak Mahindra Bank</option>
-              </select>
-            </>
-          )}
-
-          {method === 'cod' && (
-            <div style={codBox}>
-              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>💵 Cash on Delivery</div>
-              <div style={{ fontSize: 13 }}>Pay when product is delivered to your doorstep</div>
-              <div style={{ fontSize: 12, marginTop: 8, color: '#a884ff' }}>
-                ✓ No online payment required<br/>
-                ✓ Pay after inspection<br/>
-                ✓ Additional ₹50 COD charge applies
-              </div>
-            </div>
-          )}
-
-            {error && <div style={errorText}>{error}</div>}
-
-          <button disabled={processing} style={{...payBtn, opacity: processing ? 0.7 : 1}}>
-            {processing ? '⏳ Processing Payment...' : `Pay ₹${calculateTotal().toLocaleString()}`}
-          </button>
-
-         
-
-          {/* CSS */}
-          <style>{`
-            input, select, textarea {
-              width: 100%;
-              padding: 13px 14px;
-              border-radius: 12px;
-              border: 1px solid rgba(255,255,255,0.08);
-              background: rgba(255,255,255,0.08);
-              color: #fff;
-              margin-top: 8px;
-              transition: all .25s ease;
-              font-family: inherit;
-              font-size: 14px;
-            }
-            textarea {
-              resize: vertical;
-              min-height: 60px;
-            }
-            input::placeholder, textarea::placeholder {
-              color: rgba(255,255,255,0.45);
-            }
-            input:focus, select:focus, textarea:focus {
-              outline: none;
-              border-color: rgba(123,92,241,0.6);
-              box-shadow: 0 0 0 3px rgba(123,92,241,0.18);
-              background: rgba(255,255,255,0.12);
-            }
-            button:hover:not(:disabled) {
-              transform: translateY(-2px);
-              box-shadow: 0 18px 40px rgba(123,92,241,0.45);
-            }
-            button:active:not(:disabled) {
-              transform: scale(0.97);
-            }
-            button:disabled {
-              cursor: not-allowed;
-            }
-            label {
-              display: block;
-              margin-top: 14px;
-              font-size: 13px;
-              font-weight: 600;
-              color: rgba(255,255,255,0.85);
-            }
-            @keyframes fadeUp {
-              from { opacity: 0; transform: translateY(18px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-            @media (max-width: 900px) {
-              .grid { grid-template-columns: 1fr !important; }
-            }
-            @media print {
-              button { display: none; }
-            }
-          `}</style>
-        </form>
+                  {processing ? '⏳ Processing Payment...' : `Pay ₹${calculateTotal().toLocaleString()}`}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </section>
+    </div>
   )
-}
-
-/* PAYMENT TAB */
-const PayTab = ({ label, active, onClick }) => (
-  <div
-    onClick={onClick}
-    style={{
-      padding: '12px',
-      borderRadius: 14,
-      textAlign: 'center',
-      fontWeight: 700,
-      cursor: 'pointer',
-      background: active
-        ? 'linear-gradient(135deg,#7b5cf1,#a884ff)'
-        : 'rgba(255,255,255,0.08)',
-      boxShadow: active
-        ? '0 10px 30px rgba(123,92,241,0.4)'
-        : 'inset 0 0 0 1px rgba(255,255,255,0.08)',
-      transition: 'all .25s ease'
-    }}
-  >
-    {label}
-  </div>
-)
-
-/* STYLES */
-const wrapper = {
-  minHeight: '100vh',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  background: 'linear-gradient(180deg,#f7f7fb,#ffffff)',
-  padding: 24
-}
-
-const grid = {
-  display: 'grid',
-  gridTemplateColumns: '1fr 500px',
-  gap: 20,
-  maxWidth: 1200,
-  width: '100%',
-  className: 'grid'
-}
-
-const productCard = {
-  background: 'linear-gradient(180deg,#ffffff,#f7f7fb)',
-  padding: 22,
-  borderRadius: 20,
-  boxShadow: '0 18px 40px rgba(0,0,0,0.08)',
-  animation: 'fadeUp .6s ease'
-}
-
-const img = {
-  width: '100%',
-  height: 220,
-  objectFit: 'cover',
-  borderRadius: 16
-}
-
-const muted = { color: '#6b7280', marginTop: 6 }
-const row = { display: 'flex', justifyContent: 'space-between', marginTop: 8 }
-
-const payCard = {
-  background: 'linear-gradient(160deg,#1f1c28,#2a2436)',
-  padding: 26,
-  borderRadius: 22,
-  color: '#fff',
-  boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
-  backdropFilter: 'blur(14px)',
-  animation: 'fadeUp .6s ease'
-}
-
-const tabs = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(4,1fr)',
-  gap: 10,
-  margin: '16px 0'
-}
-
-const hint = { fontSize: 12, color: '#cfc9e8', marginTop: 6, lineHeight: 1.4 }
-const codBox = { 
-  padding: 16, 
-  borderRadius: 12, 
-  background: 'rgba(168, 132, 255, 0.1)', 
-  border: '1px solid rgba(168, 132, 255, 0.3)',
-  marginTop: 10 
-}
-const errorText = { 
-  color: '#ff6b6b', 
-  background: 'rgba(255, 107, 107, 0.1)',
-  padding: 12,
-  borderRadius: 10,
-  marginTop: 10,
-  fontSize: 13,
-  border: '1px solid rgba(255, 107, 107, 0.3)'
-}
-
-const payBtn = {
-  marginTop: 20,
-  width: '100%',
-  padding: 16,
-  borderRadius: 14,
-  background: 'linear-gradient(135deg,#7b5cf1,#a884ff)',
-  color: '#fff',
-  fontWeight: 900,
-  border: 'none',
-  cursor: 'pointer'
-}
-
-const secure = { marginTop: 14, fontSize: 12, textAlign: 'center', color: '#cfc9e8' }
-
-const successWrap = {
-  minHeight: '100vh',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  background: 'linear-gradient(180deg,#f7f7fb,#ffffff)',
-  padding: 24
-}
-
-const successCard = {
-  padding: 40,
-  borderRadius: 22,
-  textAlign: 'center',
-  boxShadow: '0 20px 60px rgba(123,92,241,0.2)',
-  background: '#fff',
-  maxWidth: 500,
-  animation: 'fadeUp .6s ease'
-}
-
-const check = { 
-  fontSize: 64, 
-  color: '#22c55e',
-  background: 'rgba(34, 197, 94, 0.1)',
-  width: 100,
-  height: 100,
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  margin: '0 auto 20px',
-  animation: 'checkScale .5s ease',
-  border: '3px solid #22c55e'
-}
-
-const primaryBtn = {
-  marginTop: 18,
-  padding: '14px 24px',
-  borderRadius: 12,
-  background: 'linear-gradient(135deg,#7b5cf1,#a884ff)',
-  color: '#fff',
-  border: 'none',
-  cursor: 'pointer',
-  fontWeight: 700,
-  fontSize: 15,
-  transition: 'all .25s ease',
-  flex: 1
 }

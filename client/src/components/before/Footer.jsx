@@ -4,22 +4,24 @@ const styles = {
   footer: {
     backgroundColor: "#111827",
     color: "white",
-    padding: "3rem 1rem",
-    width: "98%",
+    padding: "3rem 0",
+    width: "100%",
   },
 
   footerContent: {
     maxWidth: "1200px",
     margin: "0 auto",
+    padding: "0 2rem",
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-    gap: "2rem",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: "3rem",
     paddingBottom: "2rem",
     borderBottom: "1px solid #374151",
   },
 
   section: {
-    padding: "0 1rem",
+    display: "flex",
+    flexDirection: "column",
   },
 
   h3: {
@@ -71,6 +73,7 @@ const styles = {
   bottom: {
     maxWidth: "1200px",
     margin: "2rem auto 0",
+    padding: "0 2rem",
     textAlign: "center",
     color: "#9ca3af",
     fontSize: ".875rem",
@@ -85,12 +88,28 @@ const styles = {
 
 const Footer = () => {
   return (
-    <footer style={styles.footer}>
-      <div style={styles.footerContent}>
+    <>
+      <style>{`
+        @media (max-width: 768px) {
+          .footer-content {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 2rem !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .footer-content {
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+          }
+        }
+      `}</style>
+      <footer style={styles.footer}>
+        <div style={styles.footerContent} className="footer-content">
         {/* Section 1 */}
         <div style={styles.section}>
           <h3 style={styles.h3}>Prema Textile Mills</h3>
-          <p style={styles.p}>Location</p>
+          
           <div style={styles.contactInfo}>
             <span></span>
           </div>
@@ -133,10 +152,11 @@ const Footer = () => {
       </div>
 
       <div style={styles.bottom}>
-        <p>© 2025 ABC Company. All rights reserved. Licensed & Insured.</p>
+        <p>Prema Textile Mills. All rights reserved. Licensed & Insured.</p>
         <p style={styles.design}>Designed and Maintained By Saravana M || Prabhu Chennimalai KD||Poornima RK</p>
       </div>
     </footer>
+    </>
   );
 };
 

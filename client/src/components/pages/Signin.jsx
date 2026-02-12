@@ -220,7 +220,13 @@ export default function Signin() {
 																	else alert('Welcome email failed: ' + (data.email.error || 'unknown'));
 																}
 																localStorage.setItem('token', data.token);
-																navigate('/home');
+																
+																// Check if user is admin and navigate accordingly
+																if (data.user && data.user.isAdmin) {
+																	navigate('/admin');
+																} else {
+																	navigate('/home');
+																}
 							} catch (err) {
 								setError('Network error');
 							}
@@ -244,18 +250,7 @@ export default function Signin() {
 						<button type="submit" style={primaryBtn}>Create account</button>
 					</form>
 
-					<div style={sepRow}>
-						<div style={line} />
-						<span>Or register with</span>
-						<div style={line} />
-					</div>
-
-					<div style={providers}>
-						<button style={providerBtn}>
-							<span>🟢</span> Google
-						</button>
-						
-					</div>
+					
 
 					
 					

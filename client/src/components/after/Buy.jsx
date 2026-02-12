@@ -1,46 +1,29 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import p3 from "../../assets/photo3.jpg";
-import p2 from "../../assets/photo2.jpg";
+
 export default function Buy() {
-	const products = [
-		{
-			id: 1,
-			title: "220gram-1st Quality",
-			desc: "Soft, breathable, and ideal for everyday wear.",
-			price: 399,
-			rating: 4.7,
-			image: p3,
-				tag: "Best Seller"
-		},
-		{
-			id: 2,
-			title: "220gram-2nd Quality",
-			desc: "Durable twill weave with rich indigo tone.",
-			price: 549,
-			rating: 4.6,
-			image: p2,
-			tag: "New"
-		},
-		{
-			id: 3,
-			title: "250gram",
-			desc: "Cool, airy fabric perfect for warm climates.",
-			price: 629,
-			rating: 4.5,
-			image: p2,
-			tag: "Eco"
-		},
-		{
-			id: 4,
-			title: "200gram",
-			desc: "Soft touch with excellent temperature regulation.",
-			price: 799,
-			rating: 4.8,
-			image: p3,
-			tag: "Limited"
+	const [materials, setMaterials] = useState([]);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		fetchMaterials();
+	}, []);
+
+	const fetchMaterials = async () => {
+		try {
+			const response = await fetch('http://localhost:5000/api/materials');
+			const data = await response.json();
+			console.log('Fetched materials for Buy Now:', data.materials?.length || 0);
+			if (data.materials) {
+				setMaterials(data.materials);
+			}
+			setLoading(false);
+		} catch (err) {
+			console.error('Fetch materials error:', err);
+			setLoading(false);
 		}
-	];
+	};
 
 	const section = {
 		maxWidth: 1100,
@@ -143,32 +126,58 @@ export default function Buy() {
 		<section id="buy" style={section} aria-label="Buy Now">
 			<div style={header}>
 				<h2 style={title}>Buy Now</h2>
-				
 			</div>
 
-			<div style={grid}>
-				{products.map((p) => (
-					<article key={p.id} style={card} className="buy-card">
-						<div style={imgWrap}>
-							<img src={p.image} alt={p.title} style={img} />
-							<span style={tag}>{p.tag}</span>
-						</div>
-						<div style={body}>
-							<h3 style={name}>{p.title}</h3>
-							<p style={desc}>{p.desc}</p>
-
-							<div style={row}>
-								<span style={price}>Rs.{p.price}</span>
-								<span style={rating}>★ {p.rating}</span>
+			{loading ? (
+				<div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+					Loading materials...
+				</div>
+			) : materials.length === 0 ? (
+				<div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
+					No materials available. Please check back later or contact admin.
+				</div>
+			) : (
+				<div style={grid}>
+					{materials.map((item) => (
+						<article key={item._id || item.id} style={card} className="buy-card">
+							<div style={imgWrap}>
+								<img 
+									src={item.imageUrl || item.image || p3} 
+									alt={item.title} 
+									style={img} 
+									onError={(e) => { e.target.src = p3; }}
+								/>
+								{item.tag && <span style={tag}>{item.tag}</span>}
+								{item.category && !item.tag && <span style={tag}>{item.category}</span>}
 							</div>
-						</div>
-						<div style={cta}>
-							<button className="buy-primary" style={buyBtn} onClick={() => onBuy(p)}>Buy Now</button>
-							
-						</div>
-					</article>
-				))}
-			</div>
+							<div style={body}>
+								<h3 style={name}>{item.title}</h3>
+								<p style={desc}>{item.description || item.desc}</p>
+
+								<div style={row}>
+									<span style={price}>Rs.{item.price}</span>
+									{item.rating && <span style={rating}>★ {item.rating}</span>}
+								</div>
+								{item.quantity !== undefined && (
+									<div style={{ marginTop: 8, fontSize: 12, color: item.quantity > 0 ? '#059669' : '#dc2626' }}>
+										{item.quantity > 0 ? `${item.quantity} units available` : 'Out of stock'}
+									</div>
+								)}
+							</div>
+							<div style={cta}>
+								<button 
+									className="buy-primary" 
+									style={buyBtn} 
+									onClick={() => onBuy(item)}
+									disabled={item.quantity === 0}
+								>
+									Buy Now
+								</button>
+							</div>
+						</article>
+					))}
+				</div>
+			)}
 
 			<style>{`
 				html { scroll-behavior: smooth; }

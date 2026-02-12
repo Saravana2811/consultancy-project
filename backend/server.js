@@ -2,8 +2,16 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import authRouter from './src/routes/auth.js';
+import materialsRouter from './src/routes/materials.js';
+import uploadRouter from './src/routes/upload.js';
 import { sendWelcomeEmail, sendBillEmail } from './src/utils/mail.js';
+import Material from './src/models/Material.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -31,11 +39,36 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Serve static files from uploads directory with logging
+app.use('/uploads', (req, res, next) => {
+  console.log('📸 Static file requested:', req.url);
+  next();
+}, express.static(path.join(__dirname, 'uploads')));
+
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, ts: Date.now() });
 });
 
+// Test endpoint to check upload directory
+app.get('/api/uploads/test', (req, res) => {
+  const fs = require('fs');
+  const uploadsPath = path.join(__dirname, 'uploads', 'materials');
+  try {
+    const files = fs.readdirSync(uploadsPath);
+    res.json({ 
+      ok: true, 
+      uploadsPath, 
+      files,
+      testImageUrl: files.length > 0 ? `http://localhost:5000/uploads/materials/${files[0]}` : null
+    });
+  } catch (err) {
+    res.json({ ok: false, error: err.message, uploadsPath });
+  }
+});
+
 app.use('/api/auth', authRouter);
+app.use('/api/materials', materialsRouter);
+app.use('/api/upload', uploadRouter);
 
 // test email endpoint (POST { email, name })
 app.post('/api/test-email', async (req, res) => {
@@ -51,18 +84,59 @@ app.post('/api/test-email', async (req, res) => {
   }
 });
 
-// send bill endpoint (POST { email, orderDetails })
+// send bill endpoint (POST { email, orderDetails, productId, quantityPurchased })
 app.post('/api/send-bill', async (req, res) => {
-  const { email, orderDetails } = req.body || {};
+  const { email, orderDetails, productId, quantityPurchased } = req.body || {};
+  
+  console.log('📧 Received send-bill request:', {
+    email,
+    productId,
+    quantityPurchased,
+    hasOrderDetails: !!orderDetails
+  });
   
   if (!email) return res.status(400).json({ error: 'email is required' });
   if (!orderDetails) return res.status(400).json({ error: 'orderDetails is required' });
   
   try {
+    // First send the bill email
     const result = await sendBillEmail(email, orderDetails);
+    
     if (result && result.ok) {
-      return res.json({ ok: true, message: 'Bill email sent successfully' });
+      console.log('✅ Bill email sent successfully');
+      
+      // If email sent successfully and productId is provided, reduce quantity
+      if (productId && quantityPurchased && quantityPurchased > 0) {
+        console.log(`🔄 Attempting to reduce quantity for product: ${productId}, amount: ${quantityPurchased}`);
+        
+        try {
+          const material = await Material.findById(productId);
+          
+          if (material) {
+            console.log(`📦 Found material: ${material.title}, Current quantity: ${material.quantity}`);
+            
+            if (material.quantity >= quantityPurchased) {
+              const oldQuantity = material.quantity;
+              material.quantity -= quantityPurchased;
+              await material.save();
+              console.log(`✅ Reduced quantity for ${material.title}: ${oldQuantity} -> ${material.quantity} (-${quantityPurchased} meters)`);
+            } else {
+              console.warn(`⚠️ Insufficient quantity for ${material.title}. Available: ${material.quantity}, Requested: ${quantityPurchased}`);
+            }
+          } else {
+            console.warn(`⚠️ Material not found with ID: ${productId}`);
+          }
+        } catch (quantityError) {
+          console.error('❌ Error reducing quantity:', quantityError);
+          // Don't fail the whole request if quantity update fails
+        }
+      } else {
+        console.log('ℹ️ Skipping quantity reduction - missing productId or quantityPurchased');
+      }
+      
+      return res.json({ ok: true, message: 'Bill email sent successfully and quantity updated' });
     }
+    
     return res.status(500).json({ 
       ok: false, 
       error: result && result.error ? result.error : 'Failed to send bill email' 

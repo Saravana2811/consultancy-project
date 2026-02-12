@@ -178,6 +178,8 @@ export default function Login() {
           <h1 style={titleStyle}>Log in</h1>
           <p style={subtleText}>
             New here? <a href="/signin" style={{ color: "#cbbafc" }}>Create an account</a>
+            <br />
+            Admin? <a href="/admin-login" style={{ color: "#cbbafc" }}>Login here</a>
           </p>
 
           <form onSubmit={(e) => {
@@ -192,13 +194,15 @@ export default function Login() {
                 });
                 const data = await res.json();
                 if (!res.ok) return setError(data.error || 'Login failed');
-                // show email send status to user
-                if (data.email) {
-                  if (data.email.ok) alert('Welcome email sent to ' + (data.email.info && data.email.info.accepted ? data.email.info.accepted.join(', ') : email));
-                  else alert('Welcome email failed: ' + (data.email.error || 'unknown'));
-                }
+                
+                // Navigate based on user type
                 localStorage.setItem('token', data.token);
-                navigate('/home');
+                
+                if (data.user && data.user.isAdmin) {
+                  navigate('/admin');
+                } else {
+                  navigate('/home');
+                }
               } catch (err) {
                 setError('Network error');
               }
@@ -225,18 +229,11 @@ export default function Login() {
 
           <div style={sepRow}>
             <div style={line} />
-            <span>Or continue with</span>
+            
             <div style={line} />
           </div>
 
-          <div style={providers}>
-            <button style={providerBtn}>
-              <span>🟢</span> Google
-            </button>
-            <button style={providerBtn}>
-              <span>🍎</span> Apple
-            </button>
-          </div>
+          
           </form>
         </div>
       </div>

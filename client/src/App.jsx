@@ -6,8 +6,12 @@ import Footer from './components/before/Footer'
 import './App.css'
 import Signin from './components/pages/Signin'
 import Login from './components/pages/Login'
+import AdminLogin from './components/pages/AdminLogin'
+import AdminSignin from './components/pages/AdminSignin'
 import Home from './components/after/Home.jsx'
 import Payment from './components/pages/Payment'
+import AdminDashboard from './components/pages/AdminDashboard'
+
 function App() {
   return (
     <BrowserRouter>
@@ -25,8 +29,12 @@ function App() {
         />
         <Route path="/signin" element={<Signin />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin-signin" element={<AdminSignin />} />
         <Route path="/home" element={<Home />} />
         <Route path="/payment" element={<Payment />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/dashboard" element={<Navigate to="/home" replace />} />
         <Route path="/offers" element={<Navigate to="/home" replace />} />
       </Routes>
     </BrowserRouter>
