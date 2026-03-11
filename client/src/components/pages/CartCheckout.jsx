@@ -1,29 +1,29 @@
 import React, { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useCart } from '../../context/CartContext'
 import catalogImg from '../../assets/photo4.jpg'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Input } from '../ui/input'
-import { Textarea } from '../ui/textarea'
 import { Label } from '../ui/label'
 import { Badge } from '../ui/badge'
 import { 
   CreditCard, 
   Smartphone, 
-  Building, 
   Banknote,
   CheckCircle2,
   Package,
-  Palette,
   Truck,
   Home,
-  AlertCircle
+  AlertCircle,
+  ShoppingCart
 } from 'lucide-react'
 
-export default function Payment() {
+export default function CartCheckout() {
   const { state } = useLocation()
   const navigate = useNavigate()
-  const product = state?.product
+  const { cart, clearCart, getCartTotal } = useCart()
+  const cartItems = state?.cartItems || cart
 
   const [method, setMethod] = useState('card')
   const [processing, setProcessing] = useState(false)
@@ -35,23 +35,11 @@ export default function Payment() {
   const [cardCvv, setCardCvv] = useState('')
   const [upi, setUpi] = useState('')
   const [email, setEmail] = useState('')
-  const [gstNo, setGstNo] = useState('')
   const [error, setError] = useState('')
-
-  // Order details
-  const [selectedColorNumbers, setSelectedColorNumbers] = useState('')
-  const [lengthMeters, setLengthMeters] = useState('')
   const [orderId, setOrderId] = useState('')
 
-  const pricePerMeter = product?.price || 45
-
-  const calculateSubtotal = () => {
-    const length = Number(lengthMeters) || 0
-    return length * pricePerMeter
-  }
-
   const calculateTotal = () => {
-    return calculateSubtotal()
+    return cartItems.reduce((total, item) => total + (item.price * item.cartQuantity), 0)
   }
 
   const generateOrderId = () => {
@@ -64,7 +52,10 @@ export default function Payment() {
     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
-  if (!product) return null
+  if (!cartItems || cartItems.length === 0) {
+    navigate('/cart')
+    return null
+  }
 
   const handlePay = (e) => {
     e.preventDefault()
@@ -83,48 +74,26 @@ export default function Payment() {
     if (method === 'upi' && !upi.includes('@'))
       return setError('Enter valid UPI ID (e.g., name@upi)')
 
-    // Validate color numbers and length
-    const colorNums = selectedColorNumbers
-      .split(/[\s,]+/)
-      .map((s) => s.trim())
-      .filter(Boolean)
-
-    if (colorNums.length === 0) return setError('Please enter at least one color number from the catalog')
-
-    // Validate each color number is between 1-40
-    for (const colorNum of colorNums) {
-      const num = Number(colorNum)
-      if (isNaN(num) || num < 1 || num > 40) {
-        return setError(`Invalid color number "${colorNum}". Please enter numbers between 1-40 from the catalog.`)
-      }
-    }
-
-    const lengthVal = Number(String(lengthMeters).replace(/[^0-9.-]/g, ''))
-    if (!lengthVal || lengthVal < 1000) return setError('Length must be at least 1000 meters')
-
     setProcessing(true)
     const newOrderId = generateOrderId()
     setOrderId(newOrderId)
 
-    // Send bill email
+    // Send bill email for cart items
     try {
       const orderDetails = {
         orderId: newOrderId,
-        productTitle: product.title,
-        lengthMeters: lengthVal,
-        colors: selectedColorNumbers,
-        pricePerMeter,
-        subtotal: calculateSubtotal(),
+        items: cartItems.map(item => ({
+          productId: item._id || item.id,
+          title: item.title,
+          lengthMeters: item.cartQuantity,
+          colors: item.selectedColors,
+          pricePerMeter: item.price,
+          subtotal: item.price * item.cartQuantity
+        })),
         total: calculateTotal(),
         deliveryDate: getDeliveryDate(),
-        paymentMethod: method.toUpperCase(),
-        gstNo: gstNo || 'N/A'
+        paymentMethod: method.toUpperCase()
       }
-
-      console.log('Sending bill with quantity reduction:', {
-        productId: product._id || product.id,
-        quantityPurchased: lengthVal
-      })
 
       fetch('http://localhost:5000/api/send-bill', {
         method: 'POST',
@@ -134,14 +103,13 @@ export default function Payment() {
         body: JSON.stringify({
           email: email,
           orderDetails: orderDetails,
-          productId: product._id || product.id,
-          quantityPurchased: lengthVal
+          isCartOrder: true
         })
       })
         .then(res => res.json())
         .then(data => {
           if (data.ok) {
-            console.log('✅ Bill email sent successfully and quantity updated')
+            console.log('✅ Bill email sent successfully')
           } else {
             console.error('❌ Failed to send bill email:', data.error)
           }
@@ -156,13 +124,14 @@ export default function Payment() {
     setTimeout(() => {
       setProcessing(false)
       setSuccess(true)
+      clearCart() // Clear cart after successful payment
     }, 2000)
   }
 
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-teal-50 to-gray-50 p-6">
-        <Card className="max-w-2xl w-full shadow-2xl">
+        <Card className="max-w-3xl w-full shadow-2xl">
           <CardContent className="p-8 md:p-12 text-center space-y-6">
             <div className="w-24 h-24 mx-auto bg-green-100 rounded-full flex items-center justify-center border-4 border-green-500 animate-pulse">
               <CheckCircle2 className="w-12 h-12 text-green-600" />
@@ -177,24 +146,18 @@ export default function Payment() {
             
             <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200">
               <CardContent className="p-6 space-y-3 text-left">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-600">Product:</span>
-                  <strong className="text-slate-800">{product.title}</strong>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Length:</span>
-                  <strong className="text-slate-800">{lengthMeters} meters</strong>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Colors:</span>
-                  <strong className="text-slate-800">{selectedColorNumbers}</strong>
-                </div>
-                {gstNo && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">GST Number:</span>
-                    <strong className="text-slate-800">{gstNo}</strong>
+                <div className="font-semibold mb-2">Ordered Items:</div>
+                {cartItems.map((item, index) => (
+                  <div key={index} className="py-2 border-b last:border-0">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600 font-medium">{item.title}</span>
+                      <strong className="text-slate-800">Rs.{(item.price * item.cartQuantity).toLocaleString()}</strong>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      {item.cartQuantity}m | Colors: {item.selectedColors}
+                    </div>
                   </div>
-                )}
+                ))}
                 <div className="flex justify-between font-bold text-lg pt-3 border-t-2 border-slate-300">
                   <span>Total Paid:</span>
                   <span className="text-green-600">Rs.{calculateTotal().toLocaleString()}</span>
@@ -234,45 +197,49 @@ export default function Payment() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50 py-8 px-4 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          {/* LEFT — PRODUCT SUMMARY */}
+          {/* LEFT — ORDER SUMMARY */}
           <Card className="h-fit shadow-xl border-2 border-blue-100">
             <CardHeader>
-              <CardTitle className="text-2xl">{product.title}</CardTitle>
-              <p className="text-slate-600">{product.desc}</p>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <ShoppingCart className="w-6 h-6" />
+                Order Summary
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div>
-                <img
-                  src={catalogImg}
-                  alt="Color Catalog"
-                  onClick={() => window.open(catalogImg, '_blank')}
-                  className="w-full rounded-xl cursor-pointer border-2 border-blue-200 hover:border-teal-500 transition-all"
-                  title="Click to view full size"
-                />
-                <div className="text-sm text-teal-600 text-center mt-3 font-medium">
-                  Click to view color catalog
-                </div>
+              <div className="space-y-3">
+                {cartItems.map((item, index) => (
+                  <Card key={index} className="bg-gradient-to-br from-blue-50 to-teal-50 border border-blue-100">
+                    <CardContent className="p-4">
+                      <div className="font-semibold">{item.title}</div>
+                      <div className="flex justify-between text-sm mt-2">
+                        <span className="text-slate-600">Price per meter:</span>
+                        <span className="font-medium">Rs.{item.price}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600">Length:</span>
+                        <span className="font-medium">{item.cartQuantity} meters</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600">Colors:</span>
+                        <span className="font-medium">{item.selectedColors}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-base pt-2 border-t mt-2">
+                        <span>Subtotal:</span>
+                        <span className="text-teal-600">Rs.{(item.price * item.cartQuantity).toLocaleString()}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
 
-              <div className="border-t pt-6">
-                <Card className="bg-gradient-to-br from-blue-50 to-teal-50 border border-blue-100">
-                  <CardContent className="p-5 space-y-3">
-                    <h4 className="font-semibold text-lg mb-4">Order Summary</h4>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Price per meter</span>
-                      <span className="font-medium">Rs.{pricePerMeter}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-600">Length</span>
-                      <span className="font-medium">{lengthMeters || 0} meters</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-lg pt-3 border-t-2">
-                      <span>Total</span>
-                      <span className="text-teal-600">Rs.{calculateTotal().toLocaleString()}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <Card className="bg-gradient-to-br from-slate-700 to-slate-800 text-white border-2 border-slate-600">
+                <CardContent className="p-5">
+                  <div className="flex justify-between font-bold text-2xl">
+                    <span>Total</span>
+                    <span className="text-teal-300">Rs.{calculateTotal().toLocaleString()}</span>
+                  </div>
+                </CardContent>
+              </Card>
 
               <div className="flex items-center gap-2 p-4 bg-teal-50 rounded-lg text-sm text-teal-800">
                 <Truck className="w-5 h-5" />
@@ -298,51 +265,6 @@ export default function Payment() {
                     placeholder="you@email.com"
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-16 text-xl px-4"
                   />
-                </div>
-
-                <div className="space-y-4">
-                  <Label htmlFor="gstNo" className="text-white text-xl">GST Number (optional)</Label>
-                  <Input
-                    id="gstNo"
-                    type="text"
-                    value={gstNo}
-                    onChange={(e) => setGstNo(e.target.value.toUpperCase())}
-                    placeholder="22AAAAA0000A1Z5"
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-16 text-xl px-4"
-                  />
-                  <p className="text-lg text-teal-300">For GST invoice purposes</p>
-                </div>
-
-                {/* ORDER DETAILS */}
-                <div className="space-y-5 pt-6 border-t border-white/10">
-                  <h4 className="text-2xl font-semibold flex items-center gap-3 text-teal-300">
-                    <Palette className="w-7 h-7" />
-                    Order Details
-                  </h4>
-                  
-                  <div className="space-y-4">
-                    <Label htmlFor="colorNumbers" className="text-white text-xl">Color Numbers (from catalog) *</Label>
-                    <Input
-                      id="colorNumbers"
-                      value={selectedColorNumbers}
-                      onChange={(e) => setSelectedColorNumbers(e.target.value)}
-                      placeholder="e.g. 1, 5, 10, 25"
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-16 text-xl px-4"
-                    />
-                    <p className="text-lg text-teal-300">View catalog above and enter color numbers (1-40) separated by commas</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <Label htmlFor="lengthMeters" className="text-white text-xl">Length (meters) *</Label>
-                    <Input
-                      id="lengthMeters"
-                      value={lengthMeters}
-                      onChange={(e) => setLengthMeters(e.target.value.replace(/\D/g, ''))}
-                      placeholder="Minimum 1000 meters"
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-16 text-xl px-4"
-                    />
-                    <p className="text-lg text-teal-300">Minimum order: 1000 meters</p>
-                  </div>
                 </div>
 
                 {/* PAYMENT METHODS */}
@@ -472,10 +394,10 @@ export default function Payment() {
 
                 <Button
                   type="submit"
-                  disabled={processing || calculateTotal() === 0}
+                  disabled={processing}
                   className="w-full py-8 text-2xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 disabled:opacity-50"
                 >
-                  {processing ? 'Processing Payment...' : calculateTotal() === 0 ? 'Enter Length to Continue' : `Pay Rs.${calculateTotal().toLocaleString()}`}
+                  {processing ? 'Processing Payment...' : `Pay Rs.${calculateTotal().toLocaleString()}`}
                 </Button>
               </form>
             </CardContent>

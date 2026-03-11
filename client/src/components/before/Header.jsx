@@ -1,5 +1,7 @@
 ﻿import React, { useState } from 'react'
 import { Link } from "react-router-dom";
+import videoBackground from '../../assets/v1.mp4';
+
 export default function Header() {
 
   // Top Info Bar
@@ -40,14 +42,31 @@ export default function Header() {
   const heroStyle = {
     position: "relative",
     height: "600px",
-    background:
-      "linear-gradient(135deg, rgba(80, 80, 100, 0.8) 0%, rgba(40, 40, 60, 0.8) 100%), url('https://images.unsplash.com/photo-1591195853828-11db59a44f6b?auto=format&fit=crop&w=1600&q=80')",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
     display: "flex",
     alignItems: "center",
     justifyContent: "flex-end",
-    padding: "0 48px"
+    padding: "0 48px",
+    overflow: "hidden"
+  }
+
+  const videoBackgroundStyle = {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    zIndex: 0
+  }
+
+  const videoOverlayStyle = {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "linear-gradient(135deg, rgba(80, 80, 100, 0.7) 0%, rgba(40, 40, 60, 0.7) 100%)",
+    zIndex: 1
   }
 
   // LEFT side ABC company
@@ -66,7 +85,9 @@ export default function Header() {
   const heroTextContainerStyle = {
     maxWidth: "500px",
     textAlign: "right",
-    color: "#fff"
+    color: "#fff",
+    position: "relative",
+    zIndex: 2
   }
 
   const heroTitleStyle = {
@@ -133,6 +154,20 @@ export default function Header() {
 
       {/* Hero Section */}
       <div style={heroStyle}>
+        {/* Video Background */}
+        <video 
+          style={videoBackgroundStyle}
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+        >
+          <source src={videoBackground} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+        
+        {/* Overlay */}
+        <div style={videoOverlayStyle}></div>
 
         {/* LEFT SIDE LABEL */}
         <span
@@ -146,7 +181,7 @@ export default function Header() {
     fontWeight: 900,
     fontSize: "2.8rem",
     letterSpacing: "1px",
-   
+    zIndex: 2,
     WebkitFontSmoothing: "antialiased",
     MozOsxFontSmoothing: "grayscale"
   }}

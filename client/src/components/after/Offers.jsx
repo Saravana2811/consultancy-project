@@ -27,10 +27,10 @@ export default function Offers() {
         },
         {
             id: 3,
-            title: "Premium Offer",
+            title: "Bulk Pro",
             discount: "25% OFF",
             code: "BULK50",
-            description: "Exclusive for premium members",
+            description: "Order 10+ items and save 25%",
             minOrder: 500,
             expiryDays: 30,
             color: "rgb(61, 80, 88)",

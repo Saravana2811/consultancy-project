@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../../context/CartContext';
 import p3 from "../../assets/photo3.jpg";
 
 export default function Buy() {
 	const [materials, setMaterials] = useState([]);
 	const [loading, setLoading] = useState(true);
+	const { addToCart } = useCart();
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		fetchMaterials();
@@ -115,11 +118,14 @@ export default function Buy() {
 		flex: 1
 	};
 
-	const navigate = useNavigate();
-
 	const onBuy = (p) => {
 		// navigate to payment page and pass product in location state
 		navigate('/payment', { state: { product: p } });
+	};
+
+	const handleAddToCart = (item) => {
+		addToCart(item, 1000); // Default 1000 meters
+		alert(`${item.title} added to cart!`);
 	};
 
 	return (
@@ -160,11 +166,19 @@ export default function Buy() {
 								</div>
 								{item.quantity !== undefined && (
 									<div style={{ marginTop: 8, fontSize: 12, color: item.quantity > 0 ? '#059669' : '#dc2626' }}>
-										{item.quantity > 0 ? `${item.quantity} units available` : 'Out of stock'}
+										{item.quantity > 0 ? `${item.quantity} meters available` : 'Out of stock'}
 									</div>
 								)}
 							</div>
 							<div style={cta}>
+								<button 
+									className="buy-secondary" 
+									style={outlineBtn} 
+									onClick={() => handleAddToCart(item)}
+									disabled={item.quantity === 0}
+								>
+									Add to Cart
+								</button>
 								<button 
 									className="buy-primary" 
 									style={buyBtn} 

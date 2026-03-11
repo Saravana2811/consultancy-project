@@ -4,9 +4,13 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import passport from 'passport';
+import session from 'express-session';
+import configurePassport from './src/config/passport.js';
 import authRouter from './src/routes/auth.js';
 import materialsRouter from './src/routes/materials.js';
 import uploadRouter from './src/routes/upload.js';
+import chatRouter from './src/routes/chat.js';
 import { sendWelcomeEmail, sendBillEmail } from './src/utils/mail.js';
 import Material from './src/models/Material.js';
 
@@ -39,6 +43,22 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Session configuration for Passport
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'textile_session_secret_2026',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+configurePassport();
+
 // Serve static files from uploads directory with logging
 app.use('/uploads', (req, res, next) => {
   console.log('📸 Static file requested:', req.url);
@@ -69,6 +89,7 @@ app.get('/api/uploads/test', (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/materials', materialsRouter);
 app.use('/api/upload', uploadRouter);
+app.use('/api/chat', chatRouter);
 
 // test email endpoint (POST { email, name })
 app.post('/api/test-email', async (req, res) => {

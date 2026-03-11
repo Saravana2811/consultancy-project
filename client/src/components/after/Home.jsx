@@ -2,11 +2,13 @@ import React from "react";
 import Footer from "./Footer.jsx";
 import Navbar from "./Navbar.jsx";
 import Buy from "./Buy.jsx";
-import Offers from "./Offers.jsx";
+import SampleRequest from "./SampleRequest.jsx";
 import Steps from "./Step.jsx";
 import Location from "./Location.jsx";
 import Mem from "./Mem.jsx";
+import TamilChat from "../pages/TamilChat.jsx";
 import "./Home.css";
+import video1 from "../../assets/v1.mp4";
 export default function Home() {
     return (
         <>
@@ -16,26 +18,30 @@ export default function Home() {
             <div className="home-content">
               <Navbar  />
               <Buy />
-              <Offers />
+              <SampleRequest />
                             <Steps />
 
-                            {/* Inline section video after Steps - place file at public/videos/section-video.mp4 */}
-                            <section className="inline-video-section">
+                            {/* Video Banner */}
+                            <section className="video-banner">
                                 <video
-                                    className="inline-video"
-                                    src="src/assets/v1.mp4"
+                                    className="banner-video"
+                                    src={video1}
                                     autoPlay
                                     loop
                                     muted
                                     playsInline
-                                    aria-hidden="true"
                                 />
-                                <div className="inline-video-overlay" aria-hidden="true" />
                             </section>
 
                             <Location />
               <Mem />
               <Footer />
+              
+              {/* Tamil Chat Component - Only for Users */}
+              <TamilChat 
+                userId={localStorage.getItem('userId') || 'guest'} 
+                userName={localStorage.getItem('userName') || 'User'} 
+              />
             </div>
         </>
     );

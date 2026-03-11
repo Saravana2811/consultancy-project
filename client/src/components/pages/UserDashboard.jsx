@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import DashboardNav from './DashboardNav';
+import TamilChat from './TamilChat';
 import './UserDashboard.css';
 
 const UserDashboard = () => {
@@ -167,6 +168,12 @@ const UserDashboard = () => {
           </div>
         )}
       </div>
+      
+      {/* Tamil Chat Component */}
+      <TamilChat 
+        userId={localStorage.getItem('userId') || 'guest'} 
+        userName={localStorage.getItem('userName') || 'User'} 
+      />
     </div>
   );
 };

@@ -61,6 +61,28 @@ router.get('/', async (req, res) => {
 });
 
 /* =========================
+   GET MATERIALS BY CURRENT ADMIN
+   GET /api/materials/my-materials
+========================= */
+router.get('/my-materials', authenticateToken, async (req, res) => {
+  try {
+    const materials = await Material.find({ uploadedBy: req.user.uid })
+      .sort({ createdAt: -1 })
+      .populate('uploadedBy', 'name email');
+    
+    console.log(`📦 Fetched ${materials.length} materials for admin ${req.user.uid}`);
+    
+    res.json({ 
+      materials,
+      message: materials.length === 0 ? 'No materials found' : `Found ${materials.length} materials`
+    });
+  } catch (err) {
+    console.error('Get my materials error:', err);
+    res.status(500).json({ error: 'Failed to fetch your materials' });
+  }
+});
+
+/* =========================
    GET SINGLE MATERIAL
    GET /api/materials/:id
 ========================= */

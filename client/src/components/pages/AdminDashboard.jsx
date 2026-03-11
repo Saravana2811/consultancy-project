@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import DashboardNav from './DashboardNav';
+import Analytics from './Analytics';
+import CustomDatasetAnalytics from './CustomDatasetAnalytics';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
@@ -16,7 +18,15 @@ import {
   Image as ImageIcon,
   ShoppingBag,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  BarChart3,
+  FileSpreadsheet,
+  User,
+  MessageSquare,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -27,6 +37,8 @@ const AdminDashboard = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageErrors, setImageErrors] = useState({});
+  const [sampleRequests, setSampleRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -38,14 +50,23 @@ const AdminDashboard = () => {
   });
   
   const [editingId, setEditingId] = useState(null);
+  const [activeView, setActiveView] = useState('materials'); // 'materials', 'analytics', 'customDataset', 'sampleRequests'
 
   useEffect(() => {
     fetchMaterials();
-  }, []);
+    if (activeView === 'sampleRequests') {
+      fetchSampleRequests();
+    }
+  }, [activeView]);
 
   const fetchMaterials = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/materials');
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/materials', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const data = await response.json();
       if (data.materials) {
         console.log('Fetched materials:', data.materials);
@@ -54,6 +75,44 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error('Fetch materials error:', err);
       setError('Failed to load materials');
+    }
+  };
+
+  const fetchSampleRequests = async () => {
+    setLoadingRequests(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/chat/all', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const chats = await response.json();
+      
+      // Filter chats that contain sample requests (messages with 📦 New Sample Request)
+      const requests = [];
+      chats.forEach(chat => {
+        chat.messages.forEach((msg, idx) => {
+          if (msg.sender === 'user' && msg.text.includes('📦 New Sample Request')) {
+            requests.push({
+              ...msg,
+              chatId: chat._id,
+              userId: chat.userId,
+              userName: chat.userName,
+              messageIndex: idx
+            });
+          }
+        });
+      });
+      
+      // Sort by timestamp, newest first
+      requests.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      setSampleRequests(requests);
+    } catch (err) {
+      console.error('Fetch sample requests error:', err);
+      setError('Failed to load sample requests');
+    } finally {
+      setLoadingRequests(false);
     }
   };
 
@@ -335,9 +394,183 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Upload Section */}
+        
+        {/* View Toggle */}
+        <div className="flex justify-center gap-3 flex-wrap">
+          <Button
+            onClick={() => setActiveView('materials')}
+            variant={activeView === 'materials' ? "default" : "outline"}
+            className={activeView === 'materials' ? "bg-blue-600 hover:bg-blue-700" : ""}
+          >
+            <Package className="w-4 h-4 mr-2" />
+            Materials Management
+          </Button>
+          <Button
+            onClick={() => setActiveView('sampleRequests')}
+            variant={activeView === 'sampleRequests' ? "default" : "outline"}
+            className={activeView === 'sampleRequests' ? "bg-orange-600 hover:bg-orange-700" : ""}
+          >
+            <MessageSquare className="w-4 h-4 mr-2" />
+            Sample Requests
+            {sampleRequests.length > 0 && (
+              <Badge className="ml-2 bg-red-500 text-white">{sampleRequests.length}</Badge>
+            )}
+          </Button>
+          <Button
+            onClick={() => setActiveView('analytics')}
+            variant={activeView === 'analytics' ? "default" : "outline"}
+            className={activeView === 'analytics' ? "bg-purple-600 hover:bg-purple-700" : ""}
+          >
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Database Analytics
+          </Button>
+          <Button
+            onClick={() => setActiveView('customDataset')}
+            variant={activeView === 'customDataset' ? "default" : "outline"}
+            className={activeView === 'customDataset' ? "bg-green-600 hover:bg-green-700" : ""}
+          >
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            Custom Dataset
+          </Button>
+        </div>
+        
+        {/* Conditional Content */}
+        {activeView === 'analytics' ? (
+          <Analytics materials={materials} />
+        ) : activeView === 'customDataset' ? (
+          <CustomDatasetAnalytics />
+        ) : activeView === 'sampleRequests' ? (
+          <div>
+            <Card className="shadow-xl border-2">
+              <CardHeader className="border-b bg-gradient-to-r from-orange-50 to-orange-100">
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Sample Requests
+                  <Badge className="ml-2 bg-orange-600">{sampleRequests.length}</Badge>
+                </CardTitle>
+                <CardDescription>View and manage customer sample requests</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                {loadingRequests ? (
+                  <div className="text-center py-16">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+                    <p className="text-slate-600 mt-4">Loading sample requests...</p>
+                  </div>
+                ) : sampleRequests.length === 0 ? (
+                  <div className="text-center py-16 space-y-4">
+                    <MessageSquare className="w-20 h-20 mx-auto text-slate-300" />
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-semibold text-slate-600">No Sample Requests Yet</h3>
+                      <p className="text-slate-500">Customer sample requests will appear here</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {sampleRequests.map((request, index) => {
+                      const lines = request.text.split('\n');
+                      const details = {};
+                      
+                      lines.forEach(line => {
+                        if (line.startsWith('Name:')) details.name = line.replace('Name:', '').trim();
+                        if (line.startsWith('Company:')) details.company = line.replace('Company:', '').trim();
+                        if (line.startsWith('Email:')) details.email = line.replace('Email:', '').trim();
+                        if (line.startsWith('Phone:')) details.phone = line.replace('Phone:', '').trim();
+                        if (line.startsWith('Address:')) details.address = line.replace('Address:', '').trim();
+                        if (line.startsWith('Notes:')) details.notes = line.replace('Notes:', '').trim();
+                        if (line.startsWith('Request Date:')) details.requestDate = line.replace('Request Date:', '').trim();
+                      });
+                      
+                      const materialsStartIndex = lines.findIndex(l => l.includes('Materials Requested:'));
+                      const materialsEndIndex = lines.findIndex((l, i) => i > materialsStartIndex && (l.startsWith('Notes:') || l.startsWith('Request Date:')));
+                      const materialsText = materialsEndIndex > materialsStartIndex 
+                        ? lines.slice(materialsStartIndex + 1, materialsEndIndex).join(', ').trim()
+                        : lines.slice(materialsStartIndex + 1).join(', ').split('Notes:')[0].split('Request Date:')[0].trim();
+                      
+                      return (
+                        <Card key={index} className="overflow-hidden border-2 hover:shadow-lg transition-shadow">
+                          <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-4 border-b">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                  <User className="w-5 h-5 text-orange-600" />
+                                  {details.name || request.userName}
+                                </h3>
+                                <p className="text-sm text-slate-600 mt-1">User ID: {request.userId}</p>
+                              </div>
+                              <div className="text-right">
+                                <Badge className="bg-orange-600 text-white">
+                                  <Calendar className="w-3 h-3 mr-1" />
+                                  {new Date(request.timestamp).toLocaleDateString()}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <CardContent className="p-6 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-3">
+                                <div className="flex items-start gap-2">
+                                  <User className="w-4 h-4 text-slate-400 mt-1" />
+                                  <div>
+                                    <p className="text-xs text-slate-500 font-semibold">Company</p>
+                                    <p className="text-sm text-slate-800">{details.company || 'N/A'}</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-start gap-2">
+                                  <Mail className="w-4 h-4 text-slate-400 mt-1" />
+                                  <div>
+                                    <p className="text-xs text-slate-500 font-semibold">Email</p>
+                                    <p className="text-sm text-slate-800">{details.email || 'N/A'}</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex items-start gap-2">
+                                  <Phone className="w-4 h-4 text-slate-400 mt-1" />
+                                  <div>
+                                    <p className="text-xs text-slate-500 font-semibold">Phone</p>
+                                    <p className="text-sm text-slate-800">{details.phone || 'N/A'}</p>
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-3">
+                                <div className="flex items-start gap-2">
+                                  <MapPin className="w-4 h-4 text-slate-400 mt-1" />
+                                  <div>
+                                    <p className="text-xs text-slate-500 font-semibold">Delivery Address</p>
+                                    <p className="text-sm text-slate-800">{details.address || 'N/A'}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="pt-3 border-t">
+                              <p className="text-xs text-slate-500 font-semibold mb-2">📦 Materials Requested:</p>
+                              <div className="bg-blue-50 p-3 rounded-lg">
+                                <p className="text-sm text-slate-800">{materialsText || 'Not specified'}</p>
+                              </div>
+                            </div>
+                            
+                            {details.notes && (
+                              <div className="pt-3 border-t">
+                                <p className="text-xs text-slate-500 font-semibold mb-2">📝 Notes:</p>
+                                <div className="bg-amber-50 p-3 rounded-lg">
+                                  <p className="text-sm text-slate-800">{details.notes}</p>
+                                </div>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">{/* Upload Section */}
           <div className="lg:col-span-1">
             <Card className="sticky top-6 shadow-xl border-2">
               <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-cyan-50">
@@ -567,6 +800,7 @@ const AdminDashboard = () => {
             </Card>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
