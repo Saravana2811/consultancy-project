@@ -526,3 +526,44 @@ Prema Textile Mills Team
     return { ok: false, error: err?.message || 'Bill email failed' };
   }
 }
+
+export async function sendOtpEmail(to, otp) {
+  const transporter = await getTransporter();
+  if (!transporter) {
+    console.warn('Email skipped — transporter not ready');
+    return { ok: false, skipped: true };
+  }
+  const from = FROM_EMAIL || SMTP_USER;
+  try {
+    await transporter.sendMail({
+      from: `Prema Textile Mills <${from}>`,
+      to,
+      subject: `Your Password Reset OTP - Prema Textile Mills`,
+      text: `Your OTP for password reset is: ${otp}\n\nThis OTP is valid for 10 minutes. Do not share it with anyone.`,
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937;max-width:480px;margin:0 auto">
+          <div style="background:#7b5cf1;color:white;padding:24px;text-align:center;border-radius:10px 10px 0 0">
+            <h1 style="margin:0;font-size:22px">Prema Textile Mills</h1>
+            <p style="margin:6px 0 0;font-size:13px;opacity:0.85">Password Reset</p>
+          </div>
+          <div style="padding:30px;background:#ffffff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 10px 10px">
+            <h2 style="margin-top:0;color:#0f172a">Your One-Time Password</h2>
+            <p style="color:#6b7280">Use the OTP below to reset your password. It expires in <strong>10 minutes</strong>.</p>
+            <div style="background:#f3f0ff;border:2px dashed #7b5cf1;border-radius:10px;text-align:center;padding:28px 0;margin:24px 0">
+              <span style="font-size:40px;font-weight:800;letter-spacing:12px;color:#7b5cf1">${otp}</span>
+            </div>
+            <p style="color:#9ca3af;font-size:13px">If you did not request a password reset, please ignore this email. Your account is safe.</p>
+            <p style="color:#6b7280;font-size:13px;margin-top:24px">
+              <strong>Warm regards,</strong><br/>Prema Textile Mills Team
+            </p>
+          </div>
+        </div>
+      `
+    });
+    console.log(`📧 OTP email sent to ${to}`);
+    return { ok: true };
+  } catch (err) {
+    console.error(`❌ OTP email send failed for ${to}:`, err?.message || err);
+    return { ok: false, error: err?.message || 'OTP email failed' };
+  }
+}

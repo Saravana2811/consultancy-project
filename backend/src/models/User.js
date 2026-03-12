@@ -10,6 +10,8 @@ const userSchema = new mongoose.Schema({
   companyName: { type: String, trim: true },
   address: { type: String, trim: true },
   contactDetails: { type: String, trim: true },
+  otpCode: { type: String },      // hashed OTP for password reset
+  otpExpiry: { type: Date },       // OTP expiry timestamp
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);

@@ -11,6 +11,7 @@ import authRouter from './src/routes/auth.js';
 import materialsRouter from './src/routes/materials.js';
 import uploadRouter from './src/routes/upload.js';
 import chatRouter from './src/routes/chat.js';
+import paymentsRouter from './src/routes/payments.js';
 import { sendWelcomeEmail, sendBillEmail } from './src/utils/mail.js';
 import Material from './src/models/Material.js';
 
@@ -90,6 +91,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/materials', materialsRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/chat', chatRouter);
+app.use('/api/payments', paymentsRouter);
 
 // test email endpoint (POST { email, name })
 app.post('/api/test-email', async (req, res) => {

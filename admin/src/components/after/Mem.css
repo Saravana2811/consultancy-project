@@ -1,0 +1,108 @@
+/* Mem.css — attractive members list */
+
+:root {
+	--mem-fg: inherit;
+	--mem-muted: #78839a;
+	--mem-card-bg: rgba(255,255,255,0.06);
+	--mem-card-border: rgba(0,0,0,0.08);
+	--mem-brand: #4f7cff;
+	--mem-brand-2: #7c4fff;
+}
+
+.mem-section {
+	padding: 64px 20px 56px;
+	background: transparent;
+	color: var(--mem-fg);
+}
+
+.mem-header { text-align: center; max-width: 900px; margin: 0 auto 28px; }
+.mem-title { font-size: clamp(26px, 4vw, 36px); font-weight: 800; }
+.mem-subtitle { margin-top: 8px; color: var(--mem-muted); }
+
+.mem-grid {
+	display: grid;
+	grid-template-columns: repeat(12, 1fr);
+	gap: 18px;
+	max-width: 1100px;
+	margin: 0 auto;
+}
+
+/* 3-up on desktop, 2-up tablet, 1-up mobile */
+.mem-card { grid-column: span 4; }
+@media (max-width: 980px) { .mem-card { grid-column: span 6; } }
+@media (max-width: 640px) { .mem-card { grid-column: span 12; } }
+
+.mem-card {
+	position: relative;
+	overflow: hidden;
+	border-radius: 16px;
+	padding: 18px 16px 16px;
+	background: var(--mem-card-bg);
+	border: 1px solid var(--mem-card-border);
+	backdrop-filter: blur(6px);
+	transform: translateY(18px) scale(0.98);
+	opacity: 0;
+	transition: transform 700ms cubic-bezier(0.22,1,0.36,1), opacity 700ms ease, box-shadow 250ms ease;
+}
+
+.mem-card.in-view {
+	transform: translateY(0) scale(1);
+	opacity: 1;
+}
+
+.mem-card:hover { box-shadow: 0 12px 34px rgba(0,0,0,0.22); }
+
+.mem-card-bg {
+	position: absolute;
+	inset: -2px;
+	background: radial-gradient(400px 140px at 20% -20%, rgba(79,124,255,0.18), transparent),
+							radial-gradient(360px 120px at 120% 120%, rgba(124,79,255,0.16), transparent);
+	filter: saturate(120%);
+	pointer-events: none;
+}
+
+.mem-media { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+
+.mem-avatar {
+	width: 64px;
+	height: 64px;
+	border-radius: 14px;
+	object-fit: cover;
+	box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+.mem-avatar--initials {
+	display: grid;
+	place-items: center;
+	background: linear-gradient(135deg, var(--mem-brand), var(--mem-brand-2));
+	color: #fff;
+	font-weight: 800;
+	font-size: 20px;
+	letter-spacing: 0.6px;
+}
+
+.mem-name { font-weight: 800; font-size: 18px; }
+.mem-role { color: var(--mem-muted); margin-top: 2px; }
+.mem-phone { margin-top: 6px; color: var(--mem-muted); font-weight: 600; letter-spacing: 0.2px; }
+
+.mem-socials { margin-top: 12px; display: flex; gap: 10px; }
+.mem-social {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	border-radius: 999px;
+	border: 1px solid rgba(255,255,255,0.2);
+	color: inherit;
+	text-decoration: none;
+	background: rgba(255,255,255,0.06);
+	transition: transform 200ms ease, background 200ms ease, box-shadow 200ms ease;
+}
+
+.mem-social:hover {
+	transform: translateY(-1px);
+	background: linear-gradient(90deg, var(--mem-brand), var(--mem-brand-2));
+	color: #fff;
+	box-shadow: 0 10px 24px rgba(124,79,255,0.35);
+}

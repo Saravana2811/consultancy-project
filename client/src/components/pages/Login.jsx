@@ -16,7 +16,6 @@ export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -137,22 +136,23 @@ export default function Login() {
   };
 
   const providers = {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 12,
+    display: "flex",
+    justifyContent: "center",
     marginTop: 14
   };
 
   const providerBtn = {
     display: "flex",
     alignItems: "center",
+    justifyContent: "center",
     gap: 10,
-    padding: "12px 16px",
+    padding: "12px 24px",
     background: "#2b2835",
     border: "1px solid #4a445e",
     borderRadius: 12,
     color: "#eae6ff",
-    cursor: "pointer"
+    cursor: "pointer",
+    width: "100%"
   };
 
   return (
@@ -179,19 +179,11 @@ export default function Login() {
           <h1 style={titleStyle}>Log in</h1>
           <p style={subtleText}>
             New here? <a href="/signin" style={{ color: "#cbbafc" }}>Create an account</a>
-            <br />
-            Admin? <a href="/admin-login" style={{ color: "#cbbafc" }}>Login here</a>
           </p>
 
           <form onSubmit={(e) => {
             e.preventDefault();
             setError("");
-            
-            // Validate password match
-            if (password !== confirmPassword) {
-              setError('Passwords do not match');
-              return;
-            }
             
             (async () => {
               try {
@@ -230,17 +222,14 @@ export default function Login() {
               <span style={{ position: "absolute", right: 16, top: 16, color: "#9c95b1" }}></span>
             </div>
 
-            <div style={{ marginTop: 14, position: "relative" }}>
-              <input value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={inputStyle} placeholder="Confirm your password" type="password" />
-              <span style={{ position: "absolute", right: 16, top: 16, color: "#9c95b1" }}></span>
-            </div>
+
             {error && <div style={{ color: '#ffb4b4', marginTop: 10 }}>{error}</div>}
 
           <div style={checkboxRow}>
             <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <input type="checkbox" /> Remember me
             </label>
-            <a href="#" style={{ color: "#cbbafc" }}>Forgot password?</a>
+            <Link to="/forgot-password" style={{ color: "#cbbafc" }}>Forgot password?</Link>
           </div>
 
           <button type="submit" style={primaryBtn}>LogIn</button>
@@ -265,7 +254,7 @@ export default function Login() {
                 <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
                 <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
               </svg>
-              Google
+              Continue with Google
             </button>
           </div>
           </form>

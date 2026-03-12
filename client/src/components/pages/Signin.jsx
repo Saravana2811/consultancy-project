@@ -160,22 +160,23 @@ export default function Signin() {
 	};
 
 	const providers = {
-		display: "grid",
-		gridTemplateColumns: "1fr 1fr",
-		gap: 12,
+		display: "flex",
+		justifyContent: "center",
 		marginTop: 14
 	};
 
 	const providerBtn = {
 		display: "flex",
 		alignItems: "center",
+		justifyContent: "center",
 		gap: 10,
-		padding: "12px 16px",
+		padding: "12px 24px",
 		background: "#2b2835",
 		border: "1px solid #4a445e",
 		borderRadius: 12,
 		color: "#eae6ff",
-		cursor: "pointer"
+		cursor: "pointer",
+		width: "100%"
 	};
 
 	return (
@@ -236,12 +237,7 @@ export default function Signin() {
 																	localStorage.setItem('userName', data.user.name);
 																}
 																
-																// Check if user is admin and navigate accordingly
-																if (data.user && data.user.isAdmin) {
-																	navigate('/admin');
-																} else {
-																	navigate('/home');
-																}
+																navigate('/home');
 							} catch (err) {
 								setError('Network error');
 							}
@@ -300,7 +296,7 @@ export default function Signin() {
 								<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
 								<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
 							</svg>
-							Google
+							Continue with Google
 						</button>
 					</div>
 				</form>

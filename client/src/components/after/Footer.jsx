@@ -153,7 +153,7 @@ const Footer = () => {
 
       <div style={styles.bottom}>
         <p>Prema Textile Mills. All rights reserved. Licensed & Insured.</p>
-        <p style={styles.design}>Designed and Maintained By Saravana M || Prabhu Chennimalai KD||Poornima RK</p>
+        <p style={styles.design}>Designed and Maintained By Saravana M || Prabhu Chennimalai K D||Poornima R K</p>
       </div>
     </footer>
     </>
