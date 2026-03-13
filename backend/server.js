@@ -181,7 +181,18 @@ async function start() {
   try {
     await mongoose.connect(uri, { dbName: process.env.DB_NAME || 'textile' });
     console.log('MongoDB connected');
-    app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
+    const server = app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
+    server.on('error', (err) => {
+      if (err && err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Most likely another backend instance is already running.`);
+        console.error('Use one backend terminal only, or run: npm run start:clean');
+        console.error(`PowerShell check: Get-NetTCPConnection -LocalPort ${PORT} | Where-Object { $_.State -eq 'Listen' } | Select-Object LocalAddress,LocalPort,State,OwningProcess`);
+        console.error(`PowerShell stop: Stop-Process -Id (Get-NetTCPConnection -LocalPort ${PORT} | Where-Object { $_.State -eq 'Listen' } | Select-Object -First 1 -ExpandProperty OwningProcess) -Force`);
+        process.exit(1);
+      }
+      console.error('Server listen error:', err);
+      process.exit(1);
+    });
   } catch (err) {
     console.error('Failed to start server:', err);
     process.exit(1);

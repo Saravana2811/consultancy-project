@@ -4,10 +4,19 @@ import crypto from 'crypto';
 
 const router = Router();
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+function getRazorpayClient() {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    return null;
+  }
+
+  return new Razorpay({
+    key_id: keyId,
+    key_secret: keySecret,
+  });
+}
 
 /* =========================
    CREATE ORDER
@@ -16,6 +25,13 @@ const razorpay = new Razorpay({
 ========================= */
 router.post('/create-order', async (req, res) => {
   try {
+    const razorpay = getRazorpayClient();
+    if (!razorpay) {
+      return res.status(503).json({
+        error: 'Payment service is not configured. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in backend .env'
+      });
+    }
+
     const { amount } = req.body;
     if (!amount || isNaN(amount) || Number(amount) <= 0)
       return res.status(400).json({ error: 'Valid amount is required' });
@@ -47,6 +63,12 @@ router.post('/create-order', async (req, res) => {
 ========================= */
 router.post('/verify', (req, res) => {
   try {
+    if (!process.env.RAZORPAY_KEY_SECRET) {
+      return res.status(503).json({
+        error: 'Payment verification is not configured. Add RAZORPAY_KEY_SECRET in backend .env'
+      });
+    }
+
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)

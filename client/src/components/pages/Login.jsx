@@ -5,6 +5,7 @@ import s3 from "../../assets/sigin3.jpg";
 import s4 from "../../assets/sigin4.jpg";
 import { Link, useNavigate } from "react-router-dom";
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const ADMIN_APP_URL = import.meta.env.VITE_ADMIN_APP_URL || "http://localhost:5174";
 export default function Login() {
   const [slide, setSlide] = useState(0);
   const images = [
@@ -204,7 +205,7 @@ export default function Login() {
                 
                 // Navigate based on user type
                 if (data.user && data.user.isAdmin) {
-                  navigate('/admin');
+                  window.location.assign(`${ADMIN_APP_URL}/admin`);
                 } else {
                   navigate('/home');
                 }
