@@ -11,46 +11,105 @@ import p3 from '../../assets/photo3.jpg';
 
 export default function Cart() {
   const navigate = useNavigate();
-  const { cart, removeFromCart, updateCartItemQuantity, updateCartItemColors, getCartTotal, clearCart } = useCart();
+  const { cart, removeFromCart, updateCartItemColorQuantities, getCartTotal, clearCart } = useCart();
   const [showColorCatalog, setShowColorCatalog] = useState(false);
 
-  const handleQuantityChange = (itemId, newQuantity) => {
-    const quantity = Math.max(1000, parseInt(newQuantity) || 1000);
-    updateCartItemQuantity(itemId, quantity);
-  };
-
-  const handleColorChange = (itemId, colors) => {
-    updateCartItemColors(itemId, colors);
-  };
-
-  const validateColors = (colors) => {
-    if (!colors) return true;
-    const colorNums = colors.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
-    for (const colorNum of colorNums) {
-      const num = Number(colorNum);
-      if (isNaN(num) || num < 1 || num > 40) {
-        return false;
-      }
+  const getRows = (item) => {
+    if (Array.isArray(item.colorQuantities) && item.colorQuantities.length > 0) {
+      return item.colorQuantities;
     }
-    return true;
+
+    return [{ color: '', quantity: Math.max(1000, parseInt(item.cartQuantity, 10) || 1000) }];
+  };
+
+  const getAvailableMeters = (item) => {
+    const parsed = parseInt(item?.quantity, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  };
+
+  const handleRowChange = (item, rowIndex, key, value) => {
+    const rows = [...getRows(item)];
+    if (!rows[rowIndex]) return;
+
+    if (key === 'color') {
+      rows[rowIndex] = {
+        ...rows[rowIndex],
+        color: String(value || '').replace(/\D/g, '').slice(0, 2),
+      };
+    }
+
+    if (key === 'quantity') {
+      const parsed = parseInt(value, 10);
+      rows[rowIndex] = {
+        ...rows[rowIndex],
+        quantity: Number.isNaN(parsed) ? 1000 : Math.max(1000, parsed),
+      };
+    }
+
+    updateCartItemColorQuantities(item.cartItemId, rows);
+  };
+
+  const handleAddRow = (item) => {
+    const rows = [...getRows(item), { color: '', quantity: 1000 }];
+    updateCartItemColorQuantities(item.cartItemId, rows);
+  };
+
+  const handleRemoveRow = (item, rowIndex) => {
+    const rows = getRows(item);
+    if (rows.length <= 1) {
+      updateCartItemColorQuantities(item.cartItemId, [{ color: '', quantity: 1000 }]);
+      return;
+    }
+
+    updateCartItemColorQuantities(
+      item.cartItemId,
+      rows.filter((_, index) => index !== rowIndex)
+    );
+  };
+
+  const isValidColor = (colorValue) => {
+    const num = Number(colorValue);
+    return Number.isInteger(num) && num >= 1 && num <= 40;
   };
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
-    
-    // Validate colors for all items
+
     for (const item of cart) {
-      if (!item.selectedColors || item.selectedColors.trim() === '') {
-        alert(`Please select colors for ${item.title}`);
+      const rows = getRows(item);
+      const availableMeters = getAvailableMeters(item);
+      if (rows.length === 0) {
+        alert(`Please add at least one color row for ${item.title}`);
         return;
       }
-      if (!validateColors(item.selectedColors)) {
-        alert(`Invalid color number for ${item.title}. Please enter numbers between 1-40.`);
+
+      for (const row of rows) {
+        if (!isValidColor(row.color)) {
+          alert(`Invalid color number for ${item.title}. Use only 1 to 40.`);
+          return;
+        }
+
+        if ((parseInt(row.quantity, 10) || 0) < 1000) {
+          alert(`Each color quantity must be at least 1000m for ${item.title}.`);
+          return;
+        }
+      }
+
+      const uniqueColors = new Set(rows.map((row) => row.color));
+      if (uniqueColors.size !== rows.length) {
+        alert(`Duplicate colors found for ${item.title}. Use one row per color.`);
+        return;
+      }
+
+      const requestedMeters = rows.reduce((sum, row) => sum + (parseInt(row.quantity, 10) || 0), 0);
+      if (availableMeters !== null && requestedMeters > availableMeters) {
+        alert(
+          `Requested quantity exceeds available stock for ${item.title}. Available: ${availableMeters}m, Requested: ${requestedMeters}m.`
+        );
         return;
       }
     }
-    
-    // Navigate to payment with cart items
+
     navigate('/cart-checkout', { state: { cartItems: cart } });
   };
 
@@ -181,56 +240,62 @@ export default function Cart() {
                         </div>
                         
                         <div className="mt-3 space-y-3">
-                          {/* Quantity Input */}
                           <div>
                             <Label className="text-sm font-medium mb-2 block">
-                              Quantity (meters) *
+                              Color-wise Quantities *
                             </Label>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleQuantityChange(item.cartItemId, item.cartQuantity - 1000)}
-                                disabled={item.cartQuantity <= 1000}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
-                              
-                              <Input
-                                type="number"
-                                value={item.cartQuantity}
-                                onChange={(e) => handleQuantityChange(item.cartItemId, e.target.value)}
-                                className="w-32 text-center"
-                                min="1000"
-                                step="100"
-                              />
-                              
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleQuantityChange(item.cartItemId, item.cartQuantity + 1000)}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                              <span className="text-xs text-gray-500 ml-2">Min: 1000m</span>
+                            <div className="space-y-2">
+                              {getRows(item).map((row, rowIndex) => (
+                                <div key={`${item.cartItemId}_${rowIndex}`} className="grid grid-cols-12 gap-2 items-center">
+                                  <Input
+                                    type="number"
+                                    value={row.color || ''}
+                                    onChange={(e) => handleRowChange(item, rowIndex, 'color', e.target.value)}
+                                    placeholder="Color 1-40"
+                                    className="col-span-5"
+                                    min="1"
+                                    max="40"
+                                  />
+                                  <Input
+                                    type="number"
+                                    value={row.quantity}
+                                    onChange={(e) => handleRowChange(item, rowIndex, 'quantity', e.target.value)}
+                                    placeholder="Meters"
+                                    className="col-span-5"
+                                    min="1000"
+                                    max={getAvailableMeters(item) ?? undefined}
+                                    step="100"
+                                  />
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleRemoveRow(item, rowIndex)}
+                                    className="col-span-2"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              ))}
                             </div>
-                          </div>
-
-                          {/* Color Selection */}
-                          <div>
-                            <Label className="text-sm font-medium mb-2 block">
-                              Color Numbers (1-40) *
-                            </Label>
-                            <Input
-                              type="text"
-                              value={item.selectedColors || ''}
-                              onChange={(e) => handleColorChange(item.cartItemId, e.target.value)}
-                              placeholder="e.g. 1, 5, 10, 25"
-                              className="w-full"
-                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleAddRow(item)}
+                              className="mt-2"
+                            >
+                              <Plus className="w-3 h-3 mr-1" />
+                              Add Color Row
+                            </Button>
                             <p className="text-xs text-gray-500 mt-1">
-                              Enter color numbers from catalog, separated by commas
+                              Example: Color 12 - 1500m and Color 27 - 2000m in one item
                             </p>
+                            {getAvailableMeters(item) !== null && (
+                              <p className="text-xs text-amber-700 mt-1">
+                                Max allowed for this item: {getAvailableMeters(item)}m total across all color rows.
+                              </p>
+                            )}
                           </div>
                         </div>
                         

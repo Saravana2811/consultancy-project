@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import "./Step.css";
-import ph1 from "../../assets/photo1.jpg";
+import ph1 from "../../assets/p13.jpeg";
+import ph2 from "../../assets/p16.jpeg";
+import ph3 from "../../assets/p17.jpeg";
+import ph4 from "../../assets/p10.jpeg";
 const STEPS = [
 	{
 		id: 1 ,
@@ -14,21 +17,21 @@ const STEPS = [
 		title: "Dying Fabrics-Amman Dying, Manikamplayam, Erode",
 		desc: "We dye the puchased fabrics using eco‑friendly dyes based on client's request and will allow them to dry for 3-4 days",
 		caption: "Step-2",
-		image: ph1,
+		image: ph2,
 	},
 	{
 		id: 3,
 		title: "Calendering & Stitching-Baagayalakshmi Calendering, Erode",
 		desc: "Here we will iron the dyed fabrics using calendering machines to make it smooth and shiny. After that we will stitch the fabrics into required products",
 		caption: "Step-3",
-		image: ph1,
+		image: ph3,
 	},
 	{
 		id: 4,
 		title: "Finished Product-Prema Textile Mills, Erode",
 		desc: "The finished product will arrive at our premises and  involves inspecting the finished products for quality assurance before packaging and delivery to clients.",
 		caption: "Step-4",
-		image: ph1,
+		image: ph4,
 	},
 	
 ];

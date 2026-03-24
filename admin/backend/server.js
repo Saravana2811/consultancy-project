@@ -17,7 +17,12 @@ const PORT = process.env.PORT || 5001;
 
 // ─── CORS ──────────────────────────────────────────────────────
 app.use(cors({
-  origin: ['http://localhost:5174', 'http://localhost:3001'],
+  origin: (origin, callback) => {
+    // Allow non-browser tools (no Origin) and localhost dev servers on any port.
+    if (!origin) return callback(null, true);
+    if (/^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true);
+    return callback(new Error('CORS blocked for origin: ' + origin));
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));

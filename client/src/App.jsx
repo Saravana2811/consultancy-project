@@ -31,6 +31,40 @@ function ExternalAdminRedirect({ path }) {
 }
 
 function App() {
+  useEffect(() => {
+    const scriptId = 'global-chatbot-embed'
+    const styleId = 'global-chatbot-embed-style'
+    const scriptBaseUrl = 'http://10.85.110.44:3000/embed.js'
+
+    // Remove stale script instances so URL updates always take effect.
+    document
+      .querySelectorAll('script[data-bot-id="cmmuh5zeo00018l3ldyhodsho"], script#global-chatbot-embed')
+      .forEach((node) => node.remove())
+
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style')
+      style.id = styleId
+      style.textContent = `
+        iframe[src*="10.85.110.44:3000"],
+        iframe[src*="/embed"] {
+          z-index: 2147483647 !important;
+        }
+      `
+      document.head.appendChild(style)
+    }
+
+    const script = document.createElement('script')
+    script.id = scriptId
+    script.src = `${scriptBaseUrl}?v=${Date.now()}`
+    script.async = true
+    script.setAttribute('data-bot-id', 'cmmuh5zeo00018l3ldyhodsho')
+    script.setAttribute('data-color', '#000000')
+    script.onerror = () => {
+      console.error('Chatbot embed failed to load:', scriptBaseUrl)
+    }
+    document.body.appendChild(script)
+  }, [])
+
   return (
     <CartProvider>
       <BrowserRouter>

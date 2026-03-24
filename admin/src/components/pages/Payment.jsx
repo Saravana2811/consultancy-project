@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const GSTIN_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}Z[A-Z0-9]{1}$/
 
 function loadRazorpay() {
   return new Promise((resolve) => {
@@ -70,6 +71,10 @@ export default function Payment() {
     // Validate fields
     if (!email.includes('@')) return setError('Please enter a valid email address')
     if (!phone || phone.length < 10) return setError('Please enter a valid 10-digit phone number')
+    if (!gstNo) return setError('GST number is required')
+    if (!GSTIN_REGEX.test(gstNo)) {
+      return setError('Please enter a valid GST number (e.g. 22AAAAA0000A1Z5)')
+    }
 
     const colorNums = selectedColorNumbers.split(/[\s,]+/).map(s => s.trim()).filter(Boolean)
     if (colorNums.length === 0) return setError('Please enter at least one color number from the catalog')
@@ -154,7 +159,7 @@ export default function Payment() {
                   lengthMeters: lengthVal,
                   colors: selectedColorNumbers,
                   phone: phone,
-                  gstNumber: gstNo || 'N/A',
+                  gstNumber: gstNo,
                   address: address || 'N/A',
                   city: '',
                   state: '',
@@ -240,7 +245,7 @@ export default function Payment() {
                 )}
                 <div className="flex justify-between font-bold text-lg pt-3 border-t-2 border-slate-300">
                   <span>Total Paid:</span>
-                  <span className="text-green-600">Rs.{calculateSubtotal().toLocaleString()}</span>
+                  <span className="text-green-600">Rs.{calculateSubtotal().toLocaleString('en-IN')}</span>
                 </div>
               </CardContent>
             </Card>
@@ -311,7 +316,7 @@ export default function Payment() {
                     </div>
                     <div className="flex justify-between font-bold text-lg pt-3 border-t-2">
                       <span>Total</span>
-                      <span className="text-teal-600">Rs.{calculateSubtotal().toLocaleString()}</span>
+                      <span className="text-teal-600">Rs.{calculateSubtotal().toLocaleString('en-IN')}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -358,12 +363,16 @@ export default function Payment() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="gstNo" className="text-white text-base">GST Number (optional)</Label>
+                    <Label htmlFor="gstNo" className="text-white text-base">GST Number *</Label>
                     <Input
                       id="gstNo"
                       type="text"
                       value={gstNo}
-                      onChange={(e) => setGstNo(e.target.value.toUpperCase())}
+                      onChange={(e) => setGstNo(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15))}
+                      required
+                      maxLength={15}
+                      pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}Z[A-Z0-9]{1}"
+                      title="Enter a valid GST number like 22AAAAA0000A1Z5"
                       placeholder="22AAAAA0000A1Z5"
                       className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12 mt-2"
                     />
@@ -422,7 +431,7 @@ export default function Payment() {
                       ? 'Opening Payment…'
                       : calculateSubtotal() === 0
                       ? 'Enter Length to Continue'
-                      : `Pay Rs.${calculateSubtotal().toLocaleString()} with Razorpay`}
+                      : `Pay Rs.${calculateSubtotal().toLocaleString('en-IN')} with Razorpay`}
                   </Button>
                   <p className="text-center text-xs text-white/50 mt-3">
                     🔒 Secured by Razorpay — Card, UPI, Netbanking & more

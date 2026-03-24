@@ -13,10 +13,13 @@ import {
   Palette,
   Truck,
   Home,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  Minus
 } from 'lucide-react'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const GSTIN_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}Z[A-Z0-9]{1}$/
 
 function loadRazorpay() {
   return new Promise((resolve) => {
@@ -38,8 +41,7 @@ export default function Payment() {
   const [success, setSuccess] = useState(false)
 
   // Order detail fields
-  const [selectedColorNumbers, setSelectedColorNumbers] = useState('')
-  const [lengthMeters, setLengthMeters] = useState('')
+  const [colorRows, setColorRows] = useState([{ color: '', quantity: '' }])
   const [email, setEmail] = useState('')
   const [gstNo, setGstNo] = useState('')
   const [address, setAddress] = useState('')
@@ -49,10 +51,25 @@ export default function Payment() {
   const [paymentId, setPaymentId] = useState('')
 
   const pricePerMeter = product?.price || 45
+  const availableMeters = Number.isFinite(parseInt(product?.quantity, 10))
+    ? parseInt(product.quantity, 10)
+    : null
+
+  const parseQty = (value) => {
+    const parsed = parseInt(value, 10)
+    return Number.isNaN(parsed) ? 0 : parsed
+  }
+
+  const getTotalLength = () => colorRows.reduce((sum, row) => sum + parseQty(row.quantity), 0)
+
+  const getColorBreakdown = () =>
+    colorRows
+      .filter((row) => row.color && parseQty(row.quantity) > 0)
+      .map((row) => `${row.color} (${parseQty(row.quantity)}m)`)
+      .join(', ')
 
   const calculateSubtotal = () => {
-    const length = Number(lengthMeters) || 0
-    return length * pricePerMeter
+    return getTotalLength() * pricePerMeter
   }
 
   const getDeliveryDate = () => {
@@ -63,6 +80,35 @@ export default function Payment() {
 
   if (!product) return null
 
+  const handleRowChange = (index, key, value) => {
+    setColorRows((prev) =>
+      prev.map((row, i) => {
+        if (i !== index) return row
+
+        if (key === 'color') {
+          return { ...row, color: String(value || '').replace(/\D/g, '').slice(0, 2) }
+        }
+
+        if (key === 'quantity') {
+          return { ...row, quantity: String(value || '').replace(/\D/g, '') }
+        }
+
+        return row
+      })
+    )
+  }
+
+  const addColorRow = () => {
+    setColorRows((prev) => [...prev, { color: '', quantity: '' }])
+  }
+
+  const removeColorRow = (index) => {
+    setColorRows((prev) => {
+      if (prev.length <= 1) return [{ color: '', quantity: '' }]
+      return prev.filter((_, i) => i !== index)
+    })
+  }
+
   const handlePay = async (e) => {
     e.preventDefault()
     setError('')
@@ -70,16 +116,35 @@ export default function Payment() {
     // Validate fields
     if (!email.includes('@')) return setError('Please enter a valid email address')
     if (!phone || phone.length < 10) return setError('Please enter a valid 10-digit phone number')
-
-    const colorNums = selectedColorNumbers.split(/[\s,]+/).map(s => s.trim()).filter(Boolean)
-    if (colorNums.length === 0) return setError('Please enter at least one color number from the catalog')
-    for (const c of colorNums) {
-      const n = Number(c)
-      if (isNaN(n) || n < 1 || n > 40) return setError(`Invalid color number "${c}". Enter numbers between 1-40.`)
+    if (!gstNo) return setError('GST number is required')
+    if (!GSTIN_REGEX.test(gstNo)) {
+      return setError('Please enter a valid GST number (e.g. 22AAAAA0000A1Z5)')
     }
 
-    const lengthVal = Number(String(lengthMeters).replace(/[^0-9.-]/g, ''))
-    if (!lengthVal || lengthVal < 1000) return setError('Length must be at least 1000 meters')
+    const seenColors = new Set()
+    for (const row of colorRows) {
+      const color = Number(row.color)
+      const qty = parseQty(row.quantity)
+
+      if (!Number.isInteger(color) || color < 1 || color > 40) {
+        return setError('Each color must be a number between 1 and 40.')
+      }
+
+      if (seenColors.has(color)) {
+        return setError('Duplicate colors are not allowed. Use one row per color.')
+      }
+      seenColors.add(color)
+
+      if (qty < 1000) {
+        return setError('Each color quantity must be at least 1000 meters.')
+      }
+    }
+
+    const lengthVal = getTotalLength()
+    if (!lengthVal || lengthVal < 1000) return setError('Total length must be at least 1000 meters')
+    if (availableMeters !== null && availableMeters > 0 && lengthVal > availableMeters) {
+      return setError(`Total requested quantity exceeds available stock (${availableMeters}m).`)
+    }
 
     const total = calculateSubtotal()
     if (total <= 0) return setError('Total amount must be greater than 0')
@@ -99,7 +164,15 @@ export default function Payment() {
       const orderRes = await fetch(`${API}/api/payments/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: total }),
+        body: JSON.stringify({
+          amount: total,
+          stockChecks: [
+            {
+              productId: product._id || product.id,
+              requestedMeters: lengthVal,
+            },
+          ],
+        }),
       })
       const orderData = await orderRes.json()
       if (!orderRes.ok) {
@@ -114,7 +187,7 @@ export default function Payment() {
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'Prema Textile Mills',
-        description: `${product.title} — ${lengthVal}m`,
+        description: `${product.title} — ${lengthVal}m (${colorRows.length} colors)`,
         order_id: orderData.orderId,
         prefill: { email, contact: phone },
         theme: { color: '#7b5cf1' },
@@ -152,9 +225,9 @@ export default function Payment() {
                   customerName: email.split('@')[0],
                   productTitle: product.title,
                   lengthMeters: lengthVal,
-                  colors: selectedColorNumbers,
+                  colors: getColorBreakdown(),
                   phone: phone,
-                  gstNumber: gstNo || 'N/A',
+                  gstNumber: gstNo,
                   address: address || 'N/A',
                   city: '',
                   state: '',
@@ -226,11 +299,11 @@ export default function Payment() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Length:</span>
-                  <strong className="text-slate-800">{lengthMeters} meters</strong>
+                  <strong className="text-slate-800">{getTotalLength()} meters</strong>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600">Colors:</span>
-                  <strong className="text-slate-800">{selectedColorNumbers}</strong>
+                  <strong className="text-slate-800">{getColorBreakdown()}</strong>
                 </div>
                 {gstNo && (
                   <div className="flex justify-between text-sm">
@@ -240,7 +313,7 @@ export default function Payment() {
                 )}
                 <div className="flex justify-between font-bold text-lg pt-3 border-t-2 border-slate-300">
                   <span>Total Paid:</span>
-                  <span className="text-green-600">Rs.{calculateSubtotal().toLocaleString()}</span>
+                  <span className="text-green-600">Rs.{calculateSubtotal().toLocaleString('en-IN')}</span>
                 </div>
               </CardContent>
             </Card>
@@ -307,11 +380,11 @@ export default function Payment() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">Length</span>
-                      <span className="font-medium">{lengthMeters || 0} meters</span>
+                      <span className="font-medium">{getTotalLength()} meters</span>
                     </div>
                     <div className="flex justify-between font-bold text-lg pt-3 border-t-2">
                       <span>Total</span>
-                      <span className="text-teal-600">Rs.{calculateSubtotal().toLocaleString()}</span>
+                      <span className="text-teal-600">Rs.{calculateSubtotal().toLocaleString('en-IN')}</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -358,12 +431,16 @@ export default function Payment() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="gstNo" className="text-white text-base">GST Number (optional)</Label>
+                    <Label htmlFor="gstNo" className="text-white text-base">GST Number *</Label>
                     <Input
                       id="gstNo"
                       type="text"
                       value={gstNo}
-                      onChange={(e) => setGstNo(e.target.value.toUpperCase())}
+                      onChange={(e) => setGstNo(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15))}
+                      required
+                      maxLength={15}
+                      pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}Z[A-Z0-9]{1}"
+                      title="Enter a valid GST number like 22AAAAA0000A1Z5"
                       placeholder="22AAAAA0000A1Z5"
                       className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12 mt-2"
                     />
@@ -377,26 +454,51 @@ export default function Payment() {
                     Order Details
                   </h4>
                   <div>
-                    <Label htmlFor="colorNumbers" className="text-white text-base">Color Numbers (from catalog) *</Label>
-                    <Input
-                      id="colorNumbers"
-                      value={selectedColorNumbers}
-                      onChange={(e) => setSelectedColorNumbers(e.target.value)}
-                      placeholder="e.g. 1, 5, 10, 25"
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12 mt-2"
-                    />
-                    <p className="text-sm text-teal-300 mt-1">View catalog on the left and enter numbers (1-40)</p>
-                  </div>
-                  <div>
-                    <Label htmlFor="lengthMeters" className="text-white text-base">Length (meters) *</Label>
-                    <Input
-                      id="lengthMeters"
-                      value={lengthMeters}
-                      onChange={(e) => setLengthMeters(e.target.value.replace(/\D/g, ''))}
-                      placeholder="Minimum 1000 meters"
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12 mt-2"
-                    />
-                    <p className="text-sm text-teal-300 mt-1">Minimum order: 1000 meters</p>
+                    <Label className="text-white text-base">Color-wise Quantity Split *</Label>
+                    <div className="space-y-2 mt-2">
+                      {colorRows.map((row, index) => (
+                        <div key={`color_row_${index}`} className="grid grid-cols-12 gap-2 items-center">
+                          <Input
+                            value={row.color}
+                            onChange={(e) => handleRowChange(index, 'color', e.target.value)}
+                            placeholder="Color 1-40"
+                            className="col-span-5 bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
+                          />
+                          <Input
+                            value={row.quantity}
+                            onChange={(e) => handleRowChange(index, 'quantity', e.target.value)}
+                            placeholder="Meters"
+                            type="number"
+                            min="1000"
+                            max={availableMeters && availableMeters > 0 ? availableMeters : undefined}
+                            className="col-span-5 bg-white/10 border-white/20 text-white placeholder:text-white/50 h-12"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => removeColorRow(index)}
+                            className="col-span-2 h-12 border-red-300/70 bg-red-500/20 text-red-100 hover:bg-red-500/35 hover:border-red-200"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={addColorRow}
+                      className="mt-3 border-emerald-300/70 bg-emerald-500/20 text-emerald-100 hover:bg-emerald-500/35 hover:border-emerald-200"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Color Row
+                    </Button>
+                    <p className="text-sm text-teal-300 mt-2">Example: Color 12 - 1500m and Color 27 - 2000m</p>
+                    {availableMeters !== null && availableMeters > 0 && (
+                      <p className="text-sm text-amber-300 mt-1">
+                        Maximum available for this material: {availableMeters}m total.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -422,7 +524,7 @@ export default function Payment() {
                       ? 'Opening Payment…'
                       : calculateSubtotal() === 0
                       ? 'Enter Length to Continue'
-                      : `Pay Rs.${calculateSubtotal().toLocaleString()} with Razorpay`}
+                      : `Pay Rs.${calculateSubtotal().toLocaleString('en-IN')} with Razorpay`}
                   </Button>
                   <p className="text-center text-xs text-white/50 mt-3">
                     🔒 Secured by Razorpay — Card, UPI, Netbanking & more

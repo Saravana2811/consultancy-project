@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import Material from '../models/Material.js';
 
 const router = Router();
 
@@ -32,9 +33,31 @@ router.post('/create-order', async (req, res) => {
       });
     }
 
-    const { amount } = req.body;
+    const { amount, stockChecks } = req.body;
     if (!amount || isNaN(amount) || Number(amount) <= 0)
       return res.status(400).json({ error: 'Valid amount is required' });
+
+    if (Array.isArray(stockChecks) && stockChecks.length > 0) {
+      for (const check of stockChecks) {
+        const productId = String(check?.productId || '').trim();
+        const requestedMeters = parseInt(check?.requestedMeters, 10);
+
+        if (!productId || !Number.isFinite(requestedMeters) || requestedMeters <= 0) {
+          return res.status(400).json({ error: 'Invalid stock check payload' });
+        }
+
+        const material = await Material.findById(productId).select('title quantity');
+        if (!material) {
+          return res.status(404).json({ error: `Material not found for stock validation: ${productId}` });
+        }
+
+        if (requestedMeters > (material.quantity || 0)) {
+          return res.status(400).json({
+            error: `Requested quantity exceeds available stock for ${material.title}. Available: ${material.quantity}m, Requested: ${requestedMeters}m.`,
+          });
+        }
+      }
+    }
 
     const options = {
       amount: Math.round(Number(amount) * 100), // convert to paise

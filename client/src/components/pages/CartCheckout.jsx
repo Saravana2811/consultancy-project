@@ -42,8 +42,34 @@ export default function CartCheckout() {
   const [orderId, setOrderId] = useState('')
   const [paymentId, setPaymentId] = useState('')
 
+  const getItemColorQuantities = (item) => {
+    if (Array.isArray(item?.colorQuantities) && item.colorQuantities.length > 0) {
+      return item.colorQuantities
+    }
+
+    return [{
+      color: String(item?.selectedColors || '').split(/[\s,]+/).map((c) => c.trim()).find(Boolean) || '',
+      quantity: Math.max(1000, parseInt(item?.cartQuantity, 10) || 1000),
+    }]
+  }
+
+  const getItemQuantityTotal = (item) =>
+    getItemColorQuantities(item).reduce((sum, row) => sum + (parseInt(row.quantity, 10) || 0), 0)
+
+  const getItemSubtotal = (item) => item.price * getItemQuantityTotal(item)
+
+  const getAvailableMeters = (item) => {
+    const parsed = parseInt(item?.quantity, 10)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null
+  }
+
+  const getItemColorBreakdown = (item) =>
+    getItemColorQuantities(item)
+      .map((row) => `${row.color} (${row.quantity}m)`)
+      .join(', ')
+
   const calculateTotal = () =>
-    cartItems.reduce((total, item) => total + item.price * item.cartQuantity, 0)
+    cartItems.reduce((total, item) => total + getItemSubtotal(item), 0)
 
   const getDeliveryDate = () => {
     const date = new Date()
@@ -63,6 +89,16 @@ export default function CartCheckout() {
     if (!email.includes('@')) return setError('Please enter a valid email address')
     if (!phone || phone.length < 10) return setError('Please enter a valid 10-digit phone number')
 
+    for (const item of cartItems) {
+      const available = getAvailableMeters(item)
+      const requested = getItemQuantityTotal(item)
+      if (available !== null && requested > available) {
+        return setError(
+          `${item.title}: requested ${requested}m exceeds available stock (${available}m).`
+        )
+      }
+    }
+
     const total = calculateTotal()
     if (total <= 0) return setError('Cart total must be greater than 0')
 
@@ -81,7 +117,13 @@ export default function CartCheckout() {
       const orderRes = await fetch(`${API}/api/payments/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: total }),
+        body: JSON.stringify({
+          amount: total,
+          stockChecks: cartItems.map((item) => ({
+            productId: item._id || item.id,
+            requestedMeters: getItemQuantityTotal(item),
+          })),
+        }),
       })
       const orderData = await orderRes.json()
       if (!orderRes.ok) {
@@ -134,8 +176,8 @@ export default function CartCheckout() {
                   orderId: newOrderId,
                   customerName: email.split('@')[0],
                   productTitle: cartItems.map(i => i.title).join(', '),
-                  lengthMeters: cartItems.reduce((s, i) => s + i.cartQuantity, 0),
-                  colors: cartItems.map(i => i.selectedColors).join('; '),
+                  lengthMeters: cartItems.reduce((s, i) => s + getItemQuantityTotal(i), 0),
+                  colors: cartItems.map(i => getItemColorBreakdown(i)).join('; '),
                   phone: phone,
                   gstNumber: 'N/A',
                   address: 'N/A',
@@ -204,10 +246,10 @@ export default function CartCheckout() {
                   <div key={index} className="py-2 border-b last:border-0">
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600 font-medium">{item.title}</span>
-                      <strong className="text-slate-800">Rs.{(item.price * item.cartQuantity).toLocaleString()}</strong>
+                      <strong className="text-slate-800">Rs.{getItemSubtotal(item).toLocaleString()}</strong>
                     </div>
                     <div className="text-xs text-slate-500 mt-1">
-                      {item.cartQuantity}m | Colors: {item.selectedColors}
+                      {getItemQuantityTotal(item)}m | Colors: {getItemColorBreakdown(item)}
                     </div>
                   </div>
                 ))}
@@ -270,15 +312,15 @@ export default function CartCheckout() {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-600">Length:</span>
-                        <span className="font-medium">{item.cartQuantity} meters</span>
+                        <span className="font-medium">{getItemQuantityTotal(item)} meters</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-600">Colors:</span>
-                        <span className="font-medium">{item.selectedColors}</span>
+                        <span className="font-medium">{getItemColorBreakdown(item)}</span>
                       </div>
                       <div className="flex justify-between font-bold text-base pt-2 border-t mt-2">
                         <span>Subtotal:</span>
-                        <span className="text-teal-600">Rs.{(item.price * item.cartQuantity).toLocaleString()}</span>
+                        <span className="text-teal-600">Rs.{getItemSubtotal(item).toLocaleString()}</span>
                       </div>
                     </CardContent>
                   </Card>

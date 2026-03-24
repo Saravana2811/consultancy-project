@@ -1,13 +1,15 @@
 import React from "react";
 import p2 from "../../assets/photo2.jpg";
 import p3 from "../../assets/photo3.jpg"; 
+import p4 from "../../assets/p4.jpeg";
+import p5 from "../../assets/p11.jpeg";
 
 export default function Wedo() {
   const images = [
     { src: p2, alt: '220gram-1st Quality(1m)' },
     { src: p3, alt: '220gram-2nd Quality(1m)' },
-    { src: p2, alt: '250gram(1m)' },
-    { src: p3, alt: '200gram(1m)' },
+    { src: p4, alt: '250gram(1m)' },
+    { src: p5, alt: '200gram(1m)' },
   ];
 
   return (
