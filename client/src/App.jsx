@@ -85,6 +85,7 @@ function App() {
           <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/home" element={<Home />} />
           <Route path="/payment" element={<Payment />} />
+          <Route path="/payments" element={<Navigate to="/payment" replace />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/cart-checkout" element={<CartCheckout />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -95,6 +96,7 @@ function App() {
           <Route path="/admin" element={<ExternalAdminRedirect path="/admin" />} />
           <Route path="/dashboard" element={<Navigate to="/home" replace />} />
           <Route path="/offers" element={<Navigate to="/home" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </CartProvider>

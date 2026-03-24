@@ -66,6 +66,19 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static(path.join(__dirname, 'uploads')));
 
+app.get('/', (req, res) => {
+  res.json({
+    ok: true,
+    service: 'textile-backend',
+    message: 'Backend is running',
+    health: '/api/health'
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ ok: true, ts: Date.now() });
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, ts: Date.now() });
 });
