@@ -1,4 +1,12 @@
 {
+  "name": "textile-monorepo",
+  "private": true,
+  "scripts": {
+    "postinstall": "npm --prefix backend install && npm --prefix client install",
+    "start": "npm --prefix backend start",
+    "dev": "npm --prefix backend run dev",
+    "build": "npm --prefix client run build"
+  },
   "devDependencies": {
     "autoprefixer": "^10.4.24",
     "postcss": "^8.5.6",
