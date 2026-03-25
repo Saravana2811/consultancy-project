@@ -3,7 +3,11 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import User from './src/models/User.js';
 
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
+if (!MONGO_URI) {
+  console.error('❌ MONGO_URI/MONGODB_URI not set in environment');
+  process.exit(1);
+}
 await mongoose.connect(MONGO_URI);
 console.log('MongoDB connected');
 
