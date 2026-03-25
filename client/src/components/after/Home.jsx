@@ -6,6 +6,7 @@ import SampleRequest from "./SampleRequest.jsx";
 import Steps from "./Step.jsx";
 import Location from "./Location.jsx";
 import Mem from "./Mem.jsx";
+import TamilChat from "../pages/TamilChat.jsx";
 import "./Home.css";
 import video1 from "../../assets/v2i.mp4";
 
@@ -36,6 +37,11 @@ export default function Home() {
                             <Location />
               <Mem />
               <Footer />
+
+                            <TamilChat
+                                userId={localStorage.getItem('userId') || 'guest'}
+                                userName={localStorage.getItem('userName') || 'User'}
+                            />
             </div>
         </>
     );

@@ -4,10 +4,35 @@ import Material from '../models/Material.js';
 
 const router = express.Router();
 
+const WEBSITE_DETAILS = {
+  companyName: 'Prema Textile Mills',
+  address: '123 Textile Road (Opp to Sri Muthu Tex), Erode, Tamil Nadu, India',
+  phone: '+91 94435 34549',
+  email: 'contact@prema-textiles.example',
+  hours: 'Mon-Sat: 10:00am - 8:30pm',
+  mapsUrl: 'https://www.google.com/maps?q=11.3430139,77.721433',
+  offers: [
+    { code: 'FIRST15', text: '15% OFF on first order (min Rs.299)' },
+    { code: 'BULK20', text: '20% OFF for bulk purchase (5+ items, min Rs.1500)' },
+    { code: 'BULK50', text: '25% OFF bulk pro deal (10+ items)' }
+  ]
+};
+
+const hasTamilCharacters = (text = '') => /[\u0B80-\u0BFF]/.test(text);
+
+const getWelcomeMessage = (materialsCount, language = 'ta') => {
+  if (language === 'en') {
+    return `Hello! 👋 Welcome to ${WEBSITE_DETAILS.companyName}!\n\n🎉 We currently have ${materialsCount} material types available.\n\nYou can ask about:\n• Product prices\n• Stock availability\n• Categories\n• Delivery details\n• Offers and location\n\nHow can we help you today?`;
+  }
+
+  return `வணக்கம்! 👋 எங்கள் டெக்ஸ்டைல் ​​விற்பனை மையத்திற்கு வரவேற்கிறோம்!\n\n🎉 தற்போது ${materialsCount} வகையான துணிகள் கிடைக்கின்றன\n\nநீங்கள் கேட்கலாம்:\n• விலை விவரங்கள்\n• கையிருப்பு நிலை\n• தயாரிப்பு வகைகள்\n• டெலிவரி விவரங்கள்\n\nஎதைப் பற்றி தெரிந்து கொள்ள விரும்புகிறீர்கள்?`;
+};
+
 // Get or create chat for a user
 router.get('/user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
+    const language = req.query.language === 'en' ? 'en' : 'ta';
     
     let chat = await Chat.findOne({ userId, status: 'active' });
     
@@ -20,7 +45,7 @@ router.get('/user/:userId', async (req, res) => {
         userName: req.query.userName || 'User',
         messages: [{
           sender: 'admin',
-          text: `வணக்கம்! 👋 எங்கள் டெக்ஸ்டைல் ​​விற்பனை மையத்திற்கு வரவேற்கிறோம்!\n\n🎉 தற்போது ${materialsCount} வகையான துணிகள் கிடைக்கின்றன\n\nநீங்கள் கேட்கலாம்:\n• விலை விவரங்கள்\n• கையிருப்பு நிலை\n• தயாரிப்பு வகைகள்\n• டெலிவரி விவரங்கள்\n\nஎதைப் பற்றி தெரிந்து கொள்ள விரும்புகிறீர்கள்?`,
+          text: getWelcomeMessage(materialsCount, language),
           timestamp: new Date(),
           read: false
         }]
@@ -38,19 +63,20 @@ router.get('/user/:userId', async (req, res) => {
 // Send message
 router.post('/message', async (req, res) => {
   try {
-    const { userId, userName, text, sender } = req.body;
+    const { userId, userName, text, sender, language: languageFromRequest } = req.body;
     
     let chat = await Chat.findOne({ userId, status: 'active' });
     
     if (!chat) {
       const materialsCount = await Material.countDocuments({ isActive: true });
+      const inferredLanguage = languageFromRequest === 'en' ? 'en' : (hasTamilCharacters(text) ? 'ta' : 'en');
       
       chat = new Chat({
         userId,
         userName,
         messages: [{
           sender: 'admin',
-          text: `வணக்கம்! 👋 எங்கள் டெக்ஸ்டைல் ​​விற்பனை மையத்திற்கு வரவேற்கிறோம்!\n\n🎉 தற்போது ${materialsCount} வகையான துணிகள் கிடைக்கின்றன\n\nநீங்கள் கேட்கலாம்:\n• விலை விவரங்கள்\n• கையிருப்பு நிலை\n• தயாரிப்பு வகைகள்\n• டெலிவரி விவரங்கள்\n\nஎதைப் பற்றி தெரிந்து கொள்ள விரும்புகிறீர்கள்?`,
+          text: getWelcomeMessage(materialsCount, inferredLanguage),
           timestamp: new Date(),
           read: false
         }]
@@ -69,11 +95,60 @@ router.post('/message', async (req, res) => {
     if (sender === 'user') {
       const lowerText = text.toLowerCase();
       let autoReply = null;
+      const isTamil = languageFromRequest === 'ta' || hasTamilCharacters(text);
       
       // Fetch materials for context-aware responses
       const materials = await Material.find({ isActive: true });
       const categories = [...new Set(materials.map(m => m.category).filter(Boolean))];
       const availableMaterials = materials.filter(m => m.quantity > 0);
+
+      // English responses based on real website details
+      if (!isTamil) {
+        if (lowerText.includes('hello') || lowerText.includes('hi') || lowerText.includes('hey')) {
+          autoReply = `Hello! Welcome to ${WEBSITE_DETAILS.companyName}. We currently have ${materials.length} active materials. Ask me about prices, stock, offers, delivery, or location.`;
+        } else if (lowerText.includes('categories') || lowerText.includes('types')) {
+          autoReply = categories.length > 0
+            ? `Available categories:\n\n${categories.map(c => `• ${c}`).join('\n')}\n\nTell me which category you want to explore.`
+            : 'No categories are available right now.';
+        } else if (lowerText.includes('price') || lowerText.includes('cost') || lowerText.includes('rate')) {
+          if (materials.length > 0) {
+            const minPrice = Math.min(...materials.map(m => m.price));
+            const maxPrice = Math.max(...materials.map(m => m.price));
+            const topProducts = materials.slice(0, 3);
+            autoReply = `Our prices range from Rs.${minPrice} to Rs.${maxPrice}.\n\nTop items:\n${topProducts.map(p => `• ${p.title}: Rs.${p.price} ${p.quantity > 0 ? '(In stock)' : '(Out of stock)'}`).join('\n')}`;
+          } else {
+            autoReply = 'No products are available right now.';
+          }
+        } else if (lowerText.includes('available') || lowerText.includes('stock')) {
+          autoReply = availableMaterials.length > 0
+            ? `We currently have ${availableMaterials.length} products in stock:\n\n${availableMaterials.slice(0, 5).map(p => `• ${p.title} - Rs.${p.price} (${p.quantity} units)`).join('\n')}`
+            : 'Currently all items are out of stock. Please check back soon.';
+        } else if (lowerText.includes('delivery') || lowerText.includes('shipping')) {
+          autoReply = 'Delivery details from our website:\n\n• Estimated delivery: 3-5 business days\n• Free delivery above Rs.1000\n• Delivery available across India\n• Express delivery option available';
+        } else if (lowerText.includes('offer') || lowerText.includes('discount') || lowerText.includes('sale')) {
+          autoReply = `Current offers on website:\n\n${WEBSITE_DETAILS.offers.map(o => `• ${o.text} (Code: ${o.code})`).join('\n')}\n\nUse these codes during checkout.`;
+        } else if (lowerText.includes('contact') || lowerText.includes('location') || lowerText.includes('address') || lowerText.includes('phone') || lowerText.includes('email')) {
+          autoReply = `Contact details:\n\n🏢 ${WEBSITE_DETAILS.companyName}\n📍 ${WEBSITE_DETAILS.address}\n📞 ${WEBSITE_DETAILS.phone}\n📧 ${WEBSITE_DETAILS.email}\n🗺️ Map: ${WEBSITE_DETAILS.mapsUrl}`;
+        } else if (lowerText.includes('time') || lowerText.includes('hours') || lowerText.includes('open')) {
+          autoReply = `Working hours:\n\n🕒 ${WEBSITE_DETAILS.hours}\n\nOnline chat and browsing are available anytime.`;
+        } else if (lowerText.includes('help') || lowerText.includes('?')) {
+          autoReply = 'I can help with:\n• Product prices\n• Stock availability\n• Categories\n• Delivery\n• Offers\n• Contact/location details\n\nAsk anything and I will answer using website details.';
+        } else if (lowerText.includes('thank')) {
+          autoReply = `You are welcome! Browse our products and offers at ${WEBSITE_DETAILS.companyName}.`;
+        }
+      }
+
+      if (autoReply) {
+        chat.messages.push({
+          sender: 'admin',
+          text: autoReply,
+          timestamp: new Date(),
+          read: false
+        });
+
+        await chat.save();
+        return res.json(chat);
+      }
       
       // Greetings
       if (lowerText.includes('வணக்கம்') || lowerText.includes('hello') || lowerText.includes('hi') || lowerText.includes('hey')) {

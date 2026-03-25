@@ -5,6 +5,7 @@ const TamilChat = ({ userId, userName }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [language, setLanguage] = useState('ta');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -12,15 +13,46 @@ const TamilChat = ({ userId, userName }) => {
   const prevMessageCountRef = useRef(0);
   const shouldAutoScrollRef = useRef(true);
 
-  // Tamil quick responses
-  const quickResponses = [
-    'வணக்கம்',
-    'நன்றி',
-    'உதவி வேண்டும்',
-    'விலை என்ன?',
-    'இது கிடைக்குமா?',
-    'டெலிவரி எவ்வளவு நாள்?'
-  ];
+  const uiText = {
+    ta: {
+      title: 'உரையாடல்',
+      subtitle: 'வாடிக்கையாளர் ஆதரவு',
+      toggleTitle: 'உரையாடல்',
+      welcome: 'வணக்கம்! 👋',
+      welcomeSub: 'உங்களுக்கு எவ்வாறு உதவ முடியும்?',
+      placeholder: 'செய்தியை தட்டச்சு செய்யவும்...'
+    },
+    en: {
+      title: 'Chat',
+      subtitle: 'Customer Support',
+      toggleTitle: 'Chat',
+      welcome: 'Hello! 👋',
+      welcomeSub: 'How can we help you today?',
+      placeholder: 'Type your message...'
+    }
+  };
+
+  const quickResponsesByLanguage = {
+    ta: [
+      'வணக்கம்',
+      'நன்றி',
+      'உதவி வேண்டும்',
+      'விலை என்ன?',
+      'இது கிடைக்குமா?',
+      'டெலிவரி எவ்வளவு நாள்?'
+    ],
+    en: [
+      'Hello',
+      'Thank you',
+      'Need help',
+      'What is the price?',
+      'Is this available?',
+      'How many days for delivery?'
+    ]
+  };
+
+  const t = uiText[language];
+  const quickResponses = quickResponsesByLanguage[language];
 
   useEffect(() => {
     if (isOpen) {
@@ -29,7 +61,7 @@ const TamilChat = ({ userId, userName }) => {
       const interval = setInterval(fetchChat, 3000); // Poll every 3 seconds
       return () => clearInterval(interval);
     }
-  }, [isOpen, userId]);
+  }, [isOpen, userId, language]);
 
   useEffect(() => {
     // Only auto-scroll if there are new messages and user hasn't scrolled up
@@ -53,7 +85,7 @@ const TamilChat = ({ userId, userName }) => {
 
   const fetchChat = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/chat/user/${userId}?userName=${encodeURIComponent(userName)}`);
+      const response = await fetch(`http://localhost:5000/api/chat/user/${userId}?userName=${encodeURIComponent(userName)}&language=${language}`);
       const data = await response.json();
       chatId.current = data._id;
       setMessages(data.messages || []);
@@ -84,7 +116,8 @@ const TamilChat = ({ userId, userName }) => {
           userId,
           userName,
           text: text.trim(),
-          sender: 'user'
+          sender: 'user',
+          language
         })
       });
 
@@ -115,7 +148,7 @@ const TamilChat = ({ userId, userName }) => {
       <button 
         className="tamil-chat-toggle"
         onClick={() => setIsOpen(!isOpen)}
-        title="உரையாடல்"
+        title={t.toggleTitle}
       >
         💬
         {unreadCount > 0 && (
@@ -128,8 +161,24 @@ const TamilChat = ({ userId, userName }) => {
         <div className="tamil-chat-window">
           <div className="tamil-chat-header">
             <div>
-              <h3>உரையாடல்</h3>
-              <p className="chat-subtitle">வாடிக்கையாளர் ஆதரவு</p>
+              <h3>{t.title}</h3>
+              <p className="chat-subtitle">{t.subtitle}</p>
+              <div className="chat-language-switch" role="group" aria-label="Choose chat language">
+                <button
+                  type="button"
+                  className={`language-btn ${language === 'ta' ? 'active' : ''}`}
+                  onClick={() => setLanguage('ta')}
+                >
+                  தமிழ்
+                </button>
+                <button
+                  type="button"
+                  className={`language-btn ${language === 'en' ? 'active' : ''}`}
+                  onClick={() => setLanguage('en')}
+                >
+                  English
+                </button>
+              </div>
             </div>
             <button 
               className="chat-close-btn"
@@ -146,8 +195,8 @@ const TamilChat = ({ userId, userName }) => {
           >
             {messages.length === 0 ? (
               <div className="chat-welcome">
-                <p>வணக்கம்! 👋</p>
-                <p className="chat-welcome-sub">உங்களுக்கு எவ்வாறு உதவ முடியும்?</p>
+                <p>{t.welcome}</p>
+                <p className="chat-welcome-sub">{t.welcomeSub}</p>
               </div>
             ) : (
               messages.map((msg, index) => (
@@ -190,7 +239,7 @@ const TamilChat = ({ userId, userName }) => {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="செய்தியை தட்டச்சு செய்யவும்..."
+              placeholder={t.placeholder}
               disabled={loading}
             />
             <button 
