@@ -7,8 +7,13 @@ const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
 await mongoose.connect(MONGO_URI);
 console.log('MongoDB connected');
 
-const ADMIN_EMAIL = 'poornimark.23aim@kongu.edu';
-const ADMIN_PASSWORD = '1234567';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error('❌ ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env for seeding');
+  process.exit(1);
+}
 
 let user = await User.findOne({ email: ADMIN_EMAIL });
 

@@ -16,9 +16,12 @@ function validateEmail(email) {
 }
 
 function signToken(user) {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET not configured in environment');
+  }
   return jwt.sign(
     { uid: user._id, email: user.email },
-    process.env.JWT_SECRET || 'dev_secret',
+    process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
 }
@@ -156,7 +159,11 @@ router.get('/me', async (req, res) => {
     
     if (!token) return res.status(401).json({ error: 'Access token required' });
     
-    jwt.verify(token, process.env.JWT_SECRET || 'dev_secret', async (err, decoded) => {
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET not configured in environment');
+      return res.status(500).json({ error: 'Server not properly configured' });
+    }
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
       if (err) return res.status(403).json({ error: 'Invalid or expired token' });
       
       const user = await User.findById(decoded.uid).select('-passwordHash');
@@ -189,7 +196,11 @@ export function verifyToken(req, res, next) {
       return res.status(401).json({ error: 'Access token required' });
     }
     
-    jwt.verify(token, process.env.JWT_SECRET || 'dev_secret', async (err, decoded) => {
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET not configured in environment');
+      return res.status(500).json({ error: 'Server not properly configured' });
+    }
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
       if (err) {
         return res.status(403).json({ error: 'Invalid or expired token' });
       }
@@ -318,9 +329,13 @@ router.post('/verify-otp', async (req, res) => {
       return res.status(400).json({ error: 'OTP expired or invalid' });
 
     // Issue a short-lived reset token
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET not configured in environment');
+      return res.status(500).json({ error: 'Server not properly configured' });
+    }
     const resetToken = jwt.sign(
       { uid: user._id, purpose: 'password_reset' },
-      process.env.JWT_SECRET || 'dev_secret',
+      process.env.JWT_SECRET,
       { expiresIn: '15m' }
     );
 
@@ -351,8 +366,9 @@ router.post('/reset-password', async (req, res) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(resetToken, process.env.JWT_SECRET || 'dev_secret');
-    } catch {
+      if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET not set');
+      decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    } catch (err) {
       return res.status(400).json({ error: 'Reset link has expired. Please request a new one.' });
     }
 

@@ -11,7 +11,7 @@ const DashboardNav = () => {
     const token = localStorage.getItem('token');
     if (token) {
       // Try to get user info
-      fetch('http://localhost:5000/api/auth/me', {
+      fetch('http://localhost:5001/api/auth/me', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

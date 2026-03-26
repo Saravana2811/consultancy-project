@@ -85,14 +85,14 @@ const TamilChat = ({ userId, userName }) => {
 
   const fetchChat = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/chat/user/${userId}?userName=${encodeURIComponent(userName)}&language=${language}`);
+      const response = await fetch(`http://localhost:5001/api/chat/user/${userId}?userName=${encodeURIComponent(userName)}&language=${language}`);
       const data = await response.json();
       chatId.current = data._id;
       setMessages(data.messages || []);
       
       // Mark admin messages as read
       if (data.messages?.some(msg => msg.sender === 'admin' && !msg.read)) {
-        await fetch(`http://localhost:5000/api/chat/${data._id}/read`, {
+        await fetch(`http://localhost:5001/api/chat/${data._id}/read`, {
           method: 'PUT'
         });
       }
@@ -107,7 +107,7 @@ const TamilChat = ({ userId, userName }) => {
     setLoading(true);
     shouldAutoScrollRef.current = true; // Always scroll when user sends a message
     try {
-      const response = await fetch('http://localhost:5000/api/chat/message', {
+      const response = await fetch('http://localhost:5001/api/chat/message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

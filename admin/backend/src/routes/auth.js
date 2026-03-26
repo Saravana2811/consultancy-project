@@ -6,7 +6,7 @@ import { sendOtpEmail } from '../utils/mail.js';
 
 const router = Router();
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'poornimark.23aim@kongu.edu';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -18,6 +18,16 @@ function validateEmail(email) {
 ========================= */
 router.post('/login', async (req, res) => {
   try {
+    if (!ADMIN_EMAIL) {
+      console.error('❌ ADMIN_EMAIL not configured in environment');
+      return res.status(500).json({ error: 'Server not properly configured' });
+    }
+    
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET not configured in environment');
+      return res.status(500).json({ error: 'Server not properly configured' });
+    }
+    
     const { email = '', password = '' } = req.body || {};
 
     // Only allow the designated admin email
@@ -36,7 +46,7 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { uid: user._id, email: user.email, isAdmin: true },
-      process.env.JWT_SECRET || 'admin_secret',
+      process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
@@ -99,9 +109,13 @@ router.post('/verify-otp', async (req, res) => {
     if (!match)
       return res.status(400).json({ error: 'OTP expired or invalid' });
 
+    if (!process.env.JWT_SECRET) {
+      console.error('❌ JWT_SECRET not configured in environment');
+      return res.status(500).json({ error: 'Server not properly configured' });
+    }
     const resetToken = jwt.sign(
       { uid: user._id, purpose: 'password_reset' },
-      process.env.JWT_SECRET || 'admin_secret',
+      process.env.JWT_SECRET,
       { expiresIn: '15m' }
     );
 
@@ -131,8 +145,9 @@ router.post('/reset-password', async (req, res) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(resetToken, process.env.JWT_SECRET || 'admin_secret');
-    } catch {
+      if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET not set');
+      decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    } catch (err) {
       return res.status(400).json({ error: 'Reset link has expired. Please request a new one.' });
     }
 

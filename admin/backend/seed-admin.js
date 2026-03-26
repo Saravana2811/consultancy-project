@@ -1,18 +1,29 @@
-import 'dotenv/config';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 import User from './src/models/User.js';
 
-const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
-  console.error('❌ MONGO_URI/MONGODB_URI not set in environment');
+  console.error('❌ MONGO_URI not set in .env');
   process.exit(1);
 }
 await mongoose.connect(MONGO_URI);
 console.log('MongoDB connected');
 
-const ADMIN_EMAIL = 'poornimark.23aim@kongu.edu';
-const ADMIN_PASSWORD = 'POOR@065';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error('❌ ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env for seeding');
+  process.exit(1);
+}
 
 let user = await User.findOne({ email: ADMIN_EMAIL });
 

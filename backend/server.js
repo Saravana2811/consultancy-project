@@ -45,12 +45,17 @@ app.use(cors({
 app.use(express.json());
 
 // Session configuration for Passport
+if (!process.env.SESSION_SECRET) {
+  console.warn('⚠️  WARNING: SESSION_SECRET not set in environment - using fallback');
+}
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'textile_session_secret_2026',
+  secret: process.env.SESSION_SECRET || 'please_set_session_secret_in_env',
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'strict',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
@@ -83,42 +88,13 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, ts: Date.now() });
 });
 
-// Test endpoint to check upload directory
-app.get('/api/uploads/test', (req, res) => {
-  const fs = require('fs');
-  const uploadsPath = path.join(__dirname, 'uploads', 'materials');
-  try {
-    const files = fs.readdirSync(uploadsPath);
-    res.json({ 
-      ok: true, 
-      uploadsPath, 
-      files,
-      testImageUrl: files.length > 0 ? `http://localhost:5000/uploads/materials/${files[0]}` : null
-    });
-  } catch (err) {
-    res.json({ ok: false, error: err.message, uploadsPath });
-  }
-});
+// NOTE: Test endpoints removed for production. Use /api/health for health checks.
 
 app.use('/api/auth', authRouter);
 app.use('/api/materials', materialsRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/payments', paymentsRouter);
-
-// test email endpoint (POST { email, name })
-app.post('/api/test-email', async (req, res) => {
-  const { email, name } = req.body || {};
-  if (!email) return res.status(400).json({ error: 'email is required' });
-  try {
-    const result = await sendWelcomeEmail(email, name);
-    if (result && result.ok) return res.json({ ok: true, message: 'Email sent', info: result.info });
-    return res.status(500).json({ ok: false, error: result && result.error ? result.error : 'Failed to send email' });
-  } catch (err) {
-    console.error('Test email send failed', err);
-    res.status(500).json({ error: err && err.message ? err.message : 'Failed to send test email' });
-  }
-});
 
 // send bill endpoint (POST { email, orderDetails, productId, quantityPurchased })
 app.post('/api/send-bill', async (req, res) => {
