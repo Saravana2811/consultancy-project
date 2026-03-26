@@ -6,8 +6,6 @@ import { sendOtpEmail } from '../utils/mail.js';
 
 const router = Router();
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
-
 function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -18,7 +16,9 @@ function validateEmail(email) {
 ========================= */
 router.post('/login', async (req, res) => {
   try {
-    if (!ADMIN_EMAIL) {
+    const adminEmail = process.env.ADMIN_EMAIL;
+
+    if (!adminEmail) {
       console.error('❌ ADMIN_EMAIL not configured in environment');
       return res.status(500).json({ error: 'Server not properly configured' });
     }
@@ -31,7 +31,7 @@ router.post('/login', async (req, res) => {
     const { email = '', password = '' } = req.body || {};
 
     // Only allow the designated admin email
-    if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase())
+    if (email.toLowerCase() !== adminEmail.toLowerCase())
       return res.status(403).json({ error: 'Access denied. Unauthorized email.' });
 
     const user = await User.findOne({ email: email.toLowerCase() });

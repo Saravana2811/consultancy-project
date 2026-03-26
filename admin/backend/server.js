@@ -18,9 +18,13 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN;
 
-// ✅ SIMPLIFIED CORS (fix issues)
 app.use(cors({
-  origin: CLIENT_ORIGIN || "http://localhost:5174",
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (/^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true);
+    if (CLIENT_ORIGIN && origin === CLIENT_ORIGIN) return callback(null, true);
+    return callback(new Error('CORS blocked for origin: ' + origin));
+  },
   credentials: true
 }));
 
