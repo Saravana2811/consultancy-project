@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
@@ -7,6 +8,7 @@ import jwt from 'jsonwebtoken';
 const router = Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const materialsUploadDir = path.join(__dirname, '../../uploads/materials');
 
 function authenticateToken(req, res, next) {
   const token = (req.headers['authorization'] || '').split(' ')[1];
@@ -19,7 +21,12 @@ function authenticateToken(req, res, next) {
 }
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads/materials')),
+  destination: (req, file, cb) => {
+    if (!fs.existsSync(materialsUploadDir)) {
+      fs.mkdirSync(materialsUploadDir, { recursive: true });
+    }
+    cb(null, materialsUploadDir);
+  },
   filename: (req, file, cb) => {
     const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, path.basename(file.originalname, path.extname(file.originalname)) + '-' + unique + path.extname(file.originalname));

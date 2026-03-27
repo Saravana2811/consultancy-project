@@ -1,11 +1,18 @@
 import React, { useEffect, useRef } from "react";
 import "./Mem.css";
 import m1 from "../../assets/mem.jpg";
+import saro from "../../assets/myself.jpeg";
+import prabhu from "../../assets/prabhu.jpeg";
+import poor from "../../assets/poor.jpeg";
+import mother from "../../assets/amma.jpeg";
 const MEMBERS = [
-	{ id: 1, name: "Prema G", role: "Proprietor", phone: "+91 9488137165", image: undefined },
+	{ id: 1, name: "Prema G", role: "Proprietor", phone: "+91 9488137165", image: mother },
 	{ id: 2, name: "Muthuvel K", role: "Manager", image: undefined, phone: "+91 9443534549"},
 	{ id: 3, name: "Maithiri M", role: "Accountant", image: m1, phone: "+91 638181668" },
-	{ id: 4, name: "Karthi", role: "Employee", image: undefined, phone: "+91 9788991234" },
+	{ id: 4, name: "Saravana M", role: "Technical Assistant", image: saro, phone: "+91 6383598864" },
+	{ id: 5, name: "Prabhu Chennimalai KD", role: "Technical Assistant", image: prabhu, phone: "+91 6380899390" },
+	{ id: 6, name: "Poornesh RK", role: "Technical Assistant", image: poor, phone: "+91 90442533625" },
+	{ id: 7, name: "Karthi", role: "Employee", image: undefined, phone: "+91 9788991234" },
 	
 	
 ];

@@ -46,15 +46,16 @@ app.get('/api/health', (_, res) =>
 
 // MongoDB connection
 const MONGO_URI = process.env.MONGO_URI;
+const DB_NAME = process.env.DB_NAME || 'textile';
 
 if (!MONGO_URI) {
   console.error("❌ MONGO_URI missing in .env");
   process.exit(1);
 }
 
-mongoose.connect(MONGO_URI)
+mongoose.connect(MONGO_URI, { dbName: DB_NAME })
   .then(() => {
-    console.log("✅ MongoDB connected");
+    console.log(`✅ MongoDB connected (db: ${DB_NAME})`);
     app.listen(PORT, () =>
       console.log(`🚀 Server running on http://localhost:${PORT}`)
     );

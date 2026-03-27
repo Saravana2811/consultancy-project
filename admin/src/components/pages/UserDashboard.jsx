@@ -3,6 +3,8 @@ import DashboardNav from './DashboardNav';
 import TamilChat from './TamilChat';
 import './UserDashboard.css';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
 const UserDashboard = () => {
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +31,7 @@ const UserDashboard = () => {
         setRefreshing(true);
       }
       
-      const response = await fetch('http://localhost:5001/api/materials');
+      const response = await fetch(`${API}/api/materials`);
       const data = await response.json();
       console.log('Fetched materials:', data.materials?.length || 0, 'materials');
       if (data.materials) {

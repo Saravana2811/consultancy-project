@@ -5,13 +5,27 @@ let transporter = null;
 async function getTransporter() {
   if (transporter) return transporter;
 
+  const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const smtpPort = Number(process.env.SMTP_PORT) || 587;
+  const smtpUser = (process.env.SMTP_USER || '').trim();
+  const smtpPass = (process.env.SMTP_PASS || '').trim();
+  const looksLikePlaceholder =
+    /your_email@gmail\.com/i.test(smtpUser) ||
+    /your_app_specific_password|your_app_password_here/i.test(smtpPass);
+
+  if (!smtpUser || !smtpPass || looksLikePlaceholder) {
+    throw new Error('SMTP is not configured. Set valid SMTP_USER and SMTP_PASS in admin/backend/.env.');
+  }
+
+  const isGmail = smtpHost === 'smtp.gmail.com' || smtpUser.endsWith('@gmail.com');
+  const secure = smtpPort === 465;
+
   const t = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: false,
+    ...(isGmail ? { service: 'gmail' } : { host: smtpHost, port: smtpPort }),
+    secure,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user: smtpUser,
+      pass: smtpPass,
     },
   });
 
@@ -20,7 +34,8 @@ async function getTransporter() {
     console.log('✅ Admin SMTP verified');
     transporter = t;
   } catch (err) {
-    console.warn('⚠️  Admin SMTP verification failed:', err.message);
+    const reason = err?.message || 'Unknown SMTP verification error';
+    throw new Error(`Admin SMTP verification failed: ${reason}`);
   }
   return t;
 }
@@ -44,9 +59,10 @@ export async function sendOtpEmail(to, otp) {
   `;
 
   try {
-    await t.sendMail({ from, to, subject: 'Admin Portal — Password Reset OTP', html });
+    await t.sendMail({ from, to, subject: 'Admin Portal - Password Reset OTP', html });
     console.log(`📧 Admin OTP sent to ${to}`);
   } catch (err) {
-    console.error('❌ Failed to send admin OTP email:', err.message);
+    const reason = err?.message || 'Unknown sendMail error';
+    throw new Error(`Failed to send admin OTP email: ${reason}`);
   }
 }

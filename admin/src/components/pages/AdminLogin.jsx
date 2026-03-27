@@ -6,7 +6,7 @@ import s4 from "../../assets/sigin4.jpg";
 import { Link, useNavigate } from "react-router-dom";
 const API = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
-const ADMIN_EMAIL = "poornimark.23aim@kongu.edu";
+const ADMIN_EMAIL = "saravanam.23aim@kongu.edu";
 
 export default function AdminLogin() {
   const [slide, setSlide] = useState(0);
@@ -152,12 +152,13 @@ export default function AdminLogin() {
     e.preventDefault();
     setError("");
     setLoading(true);
+    const sanitizedPassword = password.trim();
     (async () => {
       try {
         const res = await fetch(`${API}/api/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: ADMIN_EMAIL, password })
+          body: JSON.stringify({ email: ADMIN_EMAIL, password: sanitizedPassword })
         });
         const data = await res.json();
         if (!res.ok) return setError(data.error || "Login failed");

@@ -17,12 +17,13 @@ if (!process.env.MONGO_URI && !process.env.MONGODB_URI) {
 }
 
 const MONGO_URI = process.env.MONGO_URI;
+const DB_NAME = process.env.DB_NAME || 'textile';
 if (!MONGO_URI) {
   console.error('❌ MONGO_URI not set in .env');
   process.exit(1);
 }
-await mongoose.connect(MONGO_URI);
-console.log('MongoDB connected');
+await mongoose.connect(MONGO_URI, { dbName: DB_NAME });
+console.log(`MongoDB connected (db: ${DB_NAME})`);
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;

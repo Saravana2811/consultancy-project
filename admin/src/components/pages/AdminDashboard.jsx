@@ -29,6 +29,9 @@ import {
   Calendar
 } from 'lucide-react';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const CHAT_API = import.meta.env.VITE_CHAT_API_URL || import.meta.env.VITE_CLIENT_API_URL || API;
+
 const AdminDashboard = () => {
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -62,7 +65,7 @@ const AdminDashboard = () => {
   const fetchMaterials = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/materials', {
+      const response = await fetch(`${API}/api/materials`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -81,17 +84,17 @@ const AdminDashboard = () => {
   const fetchSampleRequests = async () => {
     setLoadingRequests(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/chat/all', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetch(`${CHAT_API}/api/chat/all`);
+      if (!response.ok) {
+        throw new Error(`Chat API request failed with status ${response.status}`);
+      }
+
       const chats = await response.json();
+      const chatList = Array.isArray(chats) ? chats : [];
       
       // Filter chats that contain sample requests (messages with 📦 New Sample Request)
       const requests = [];
-      chats.forEach(chat => {
+      chatList.forEach(chat => {
         chat.messages.forEach((msg, idx) => {
           if (msg.sender === 'user' && msg.text.includes('📦 New Sample Request')) {
             requests.push({
@@ -108,6 +111,7 @@ const AdminDashboard = () => {
       // Sort by timestamp, newest first
       requests.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       setSampleRequests(requests);
+      setError('');
     } catch (err) {
       console.error('Fetch sample requests error:', err);
       setError('Failed to load sample requests');
@@ -163,8 +167,8 @@ const AdminDashboard = () => {
       const formDataToSend = new FormData();
       formDataToSend.append('image', selectedFile);
 
-      console.log('Uploading to: http://localhost:5001/api/upload/image');
-      const response = await fetch('http://localhost:5001/api/upload/image', {
+      console.log('Uploading to:', `${API}/api/upload/image`);
+      const response = await fetch(`${API}/api/upload/image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -213,8 +217,8 @@ const AdminDashboard = () => {
       }
 
       const url = editingId 
-        ? `http://localhost:5001/api/materials/${editingId}`
-        : 'http://localhost:5001/api/materials';
+        ? `${API}/api/materials/${editingId}`
+        : `${API}/api/materials`;
       
       const method = editingId ? 'PUT' : 'POST';
 
@@ -279,7 +283,7 @@ const AdminDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5001/api/materials/${id}`, {
+      const response = await fetch(`${API}/api/materials/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

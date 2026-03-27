@@ -80,7 +80,12 @@ router.post('/forgot-password', async (req, res) => {
     user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     await user.save();
 
-    await sendOtpEmail(user.email, otp);
+    try {
+      await sendOtpEmail(user.email, otp);
+    } catch (mailErr) {
+      console.error('Forgot password email send error:', mailErr?.message || mailErr);
+      return res.status(500).json({ error: 'Email service is not configured correctly. Update SMTP settings in admin/backend/.env.' });
+    }
     return res.json({ ok: true });
   } catch (err) {
     console.error('Forgot password error:', err);

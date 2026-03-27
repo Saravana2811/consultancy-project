@@ -11,23 +11,30 @@ const {
 } = process.env;
 
 async function createTransporter() {
-  if (!SMTP_USER || !SMTP_PASS) {
+  const smtpUser = (SMTP_USER || '').trim();
+  const smtpPass = (SMTP_PASS || '').trim();
+  const hasPlaceholderCreds =
+    /your_email@gmail\.com/i.test(smtpUser) ||
+    /your_app_password_here|your_app_specific_password/i.test(smtpPass);
+
+  if (!smtpUser || !smtpPass || hasPlaceholderCreds) {
     console.warn('⚠️  SMTP credentials missing — email disabled');
+    console.warn('💡 Set SMTP_USER and SMTP_PASS to real values in backend/.env (for Gmail, use an App Password).');
     return null;
   }
   
   const port = Number(SMTP_PORT);
   const isSecure = port === 465;
   const isGmail =
-    SMTP_HOST === 'smtp.gmail.com' || SMTP_USER.endsWith('@gmail.com');
+    SMTP_HOST === 'smtp.gmail.com' || smtpUser.endsWith('@gmail.com');
   
   const transportConfig = {
     ...(isGmail
       ? { service: 'gmail' }
       : { host: SMTP_HOST, port }),
     auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASS
+      user: smtpUser,
+      pass: smtpPass
     },
     secure: isSecure,
     tls: {
@@ -62,7 +69,7 @@ async function createTransporter() {
       console.error(`   • Verify SMTP port: ${port}`);
       console.error('   • Check firewall/network settings');
     }
-    console.error(`   • Current SMTP_USER: ${SMTP_USER}`);
+    console.error(`   • Current SMTP_USER: ${smtpUser}`);
     console.error(`   • Current SMTP_PORT: ${port} (secure: ${isSecure})`);
     console.error('   • Verify SMTP credentials are correct\n');
     console.warn('⚠️  Email functionality will be disabled. Application will continue without email.');
