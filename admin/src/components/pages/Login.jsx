@@ -247,7 +247,7 @@ export default function Login() {
               type="button"
               style={providerBtn}
               onClick={() => {
-                window.location.href = `${API}/api/auth/google`;
+                window.location.href = `${API}/api/auth/google?origin=${encodeURIComponent(window.location.origin)}`;
               }}
             >
               <svg width="20" height="20" viewBox="0 0 48 48">

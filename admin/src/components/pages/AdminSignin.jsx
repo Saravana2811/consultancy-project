@@ -194,10 +194,8 @@ export default function AdminSignin() {
 									const data = await res.json();
 									if (!res.ok) return setError(data.error || 'Signup failed');
 
-									// show email send status to user
-									if (data.email) {
-										if (data.email.ok) alert('Welcome email sent to ' + (email));
-										else alert('Welcome email failed: ' + (data.email.error || 'unknown'));
+									if (data.email && data.email.ok === false) {
+										console.warn('Welcome email failed:', data.email.error || 'unknown');
 									}
 									localStorage.setItem('token', data.token);
 									navigate('/admin');

@@ -62,7 +62,7 @@ const AdminDashboard = () => {
   const fetchMaterials = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/materials', {
+      const response = await fetch('http://localhost:5001/api/materials', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -82,7 +82,7 @@ const AdminDashboard = () => {
     setLoadingRequests(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/chat/all', {
+      const response = await fetch('http://localhost:5001/api/chat/all', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -163,8 +163,8 @@ const AdminDashboard = () => {
       const formDataToSend = new FormData();
       formDataToSend.append('image', selectedFile);
 
-      console.log('Uploading to: http://localhost:5000/api/upload/image');
-      const response = await fetch('http://localhost:5000/api/upload/image', {
+      console.log('Uploading to: http://localhost:5001/api/upload/image');
+      const response = await fetch('http://localhost:5001/api/upload/image', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -213,8 +213,8 @@ const AdminDashboard = () => {
       }
 
       const url = editingId 
-        ? `http://localhost:5000/api/materials/${editingId}`
-        : 'http://localhost:5000/api/materials';
+        ? `http://localhost:5001/api/materials/${editingId}`
+        : 'http://localhost:5001/api/materials';
       
       const method = editingId ? 'PUT' : 'POST';
 
@@ -279,7 +279,7 @@ const AdminDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/materials/${id}`, {
+      const response = await fetch(`http://localhost:5001/api/materials/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

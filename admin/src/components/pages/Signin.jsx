@@ -223,12 +223,10 @@ export default function Signin() {
 							body: JSON.stringify({ name, email, password, companyName, address, contactDetails })
 								});
 								const data = await res.json();
-																if (!res.ok) return setError(data.error || 'Signup failed');
-																// show email send status to user
-																if (data.email) {
-																	if (data.email.ok) alert('Welcome email sent to ' + (email));
-																	else alert('Welcome email failed: ' + (data.email.error || 'unknown'));
-																}
+								if (!res.ok) return setError(data.error || 'Signup failed');
+								if (data.email && data.email.ok === false) {
+									console.warn('Welcome email failed:', data.email.error || 'unknown');
+								}
 																
 																// Store user data in localStorage
 																localStorage.setItem('token', data.token);
@@ -292,7 +290,7 @@ export default function Signin() {
 							type="button"
 							style={providerBtn}
 							onClick={() => {
-								window.location.href = `${API}/api/auth/google`;
+								window.location.href = `${API}/api/auth/google?origin=${encodeURIComponent(window.location.origin)}`;
 							}}
 						>
 							<svg width="20" height="20" viewBox="0 0 48 48">

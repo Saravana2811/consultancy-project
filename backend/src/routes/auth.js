@@ -26,6 +26,38 @@ function signToken(user) {
   );
 }
 
+function getAllowedClientOrigins() {
+  return (process.env.CLIENT_ORIGIN || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+function getClientOriginFromState(state) {
+  if (typeof state !== 'string' || !state.trim()) return '';
+  try {
+    const parsed = new URL(state);
+    return parsed.origin;
+  } catch {
+    return '';
+  }
+}
+
+function resolveClientOrigin(state) {
+  const allowedOrigins = getAllowedClientOrigins();
+  const stateOrigin = getClientOriginFromState(state);
+
+  if (stateOrigin && allowedOrigins.includes(stateOrigin)) {
+    return stateOrigin;
+  }
+
+  if (allowedOrigins.length > 0) {
+    return allowedOrigins[0];
+  }
+
+  return process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173';
+}
+
 /* =========================
    SIGN UP
    POST /api/auth/signup
@@ -241,20 +273,26 @@ export function isAdmin(req, res, next) {
 ========================= */
 
 // Initiate Google OAuth
-router.get('/google', 
-  passport.authenticate('google', { 
+router.get('/google', (req, res, next) => {
+  const state = typeof req.query.origin === 'string' ? req.query.origin : undefined;
+  passport.authenticate('google', {
     scope: ['profile', 'email'],
-    session: false 
-  })
-);
+    session: false,
+    state
+  })(req, res, next);
+});
 
 // Google OAuth callback
 router.get('/google/callback',
-  passport.authenticate('google', { 
-    session: false,
-    failureRedirect: `${process.env.CLIENT_ORIGIN || 'http://localhost:5173'}/login?error=oauth_failed`
-  }),
+  passport.authenticate('google', { session: false }),
   async (req, res) => {
+    const clientOrigin = resolveClientOrigin(req.query?.state);
+    if (!clientOrigin) {
+      return res.status(500).json({
+        error: 'CLIENT_ORIGIN is not configured for OAuth redirects'
+      });
+    }
+
     try {
       // User is authenticated, generate JWT token
       const user = req.user;
@@ -270,11 +308,11 @@ router.get('/google/callback',
       }
 
       // Redirect to frontend with token
-      const redirectUrl = `${process.env.CLIENT_ORIGIN || 'http://localhost:5173'}/oauth/callback?token=${token}&userId=${user._id}&userName=${encodeURIComponent(user.name)}`;
+      const redirectUrl = `${clientOrigin}/oauth/callback?token=${token}&userId=${user._id}&userName=${encodeURIComponent(user.name)}`;
       res.redirect(redirectUrl);
     } catch (error) {
       console.error('OAuth callback error:', error);
-      res.redirect(`${process.env.CLIENT_ORIGIN || 'http://localhost:5173'}/login?error=oauth_error`);
+      res.redirect(`${clientOrigin}/login?error=oauth_error`);
     }
   }
 );
