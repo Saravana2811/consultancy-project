@@ -84,7 +84,7 @@ router.post('/forgot-password', async (req, res) => {
       await sendOtpEmail(user.email, otp);
     } catch (mailErr) {
       console.error('Forgot password email send error:', mailErr?.message || mailErr);
-      return res.status(500).json({ error: 'Email service is not configured correctly. Update SMTP settings in admin/backend/.env.' });
+      return res.status(500).json({ error: 'Email service is not configured correctly. Update SMTP settings in root .env.' });
     }
     return res.json({ ok: true });
   } catch (err) {

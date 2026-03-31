@@ -29,7 +29,7 @@ router.post('/create-order', async (req, res) => {
     const razorpay = getRazorpayClient();
     if (!razorpay) {
       return res.status(503).json({
-        error: 'Payment service is not configured. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in backend .env'
+        error: 'Payment service is not configured. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in root .env'
       });
     }
 
@@ -88,7 +88,7 @@ router.post('/verify', (req, res) => {
   try {
     if (!process.env.RAZORPAY_KEY_SECRET) {
       return res.status(503).json({
-        error: 'Payment verification is not configured. Add RAZORPAY_KEY_SECRET in backend .env'
+        error: 'Payment verification is not configured. Add RAZORPAY_KEY_SECRET in root .env'
       });
     }
 

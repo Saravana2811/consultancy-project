@@ -14,7 +14,7 @@ async function getTransporter() {
     /your_app_specific_password|your_app_password_here/i.test(smtpPass);
 
   if (!smtpUser || !smtpPass || looksLikePlaceholder) {
-    throw new Error('SMTP is not configured. Set valid SMTP_USER and SMTP_PASS in admin/backend/.env.');
+    throw new Error('SMTP is not configured. Set valid SMTP_USER and SMTP_PASS in root .env.');
   }
 
   const isGmail = smtpHost === 'smtp.gmail.com' || smtpUser.endsWith('@gmail.com');

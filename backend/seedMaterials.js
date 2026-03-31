@@ -1,7 +1,14 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import Material from './src/models/Material.js';
 import User from './src/models/User.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, '../.env');
+dotenv.config({ path: envPath });
 
 const sampleMaterials = [
   {
@@ -57,7 +64,7 @@ const sampleMaterials = [
 async function seedMaterials() {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
-    console.error('Missing MONGODB_URI in .env');
+    console.error('Missing MONGODB_URI in root .env');
     process.exit(1);
   }
 

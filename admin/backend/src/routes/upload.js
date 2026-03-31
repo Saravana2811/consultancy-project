@@ -42,7 +42,7 @@ const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024
 
 router.post('/image', authenticateToken, upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  const PORT = process.env.PORT || 5001;
+  const PORT = process.env.ADMIN_PORT || process.env.PORT || 5001;
   const imageUrl = `http://localhost:${PORT}/uploads/materials/${req.file.filename}`;
   console.log('✅ Image uploaded:', imageUrl);
   res.json({ message: 'Image uploaded successfully', imageUrl, filename: req.file.filename });

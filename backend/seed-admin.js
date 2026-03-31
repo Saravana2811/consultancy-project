@@ -1,7 +1,14 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import User from './src/models/User.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, '../.env');
+dotenv.config({ path: envPath });
 
 const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
 await mongoose.connect(MONGO_URI);
@@ -11,7 +18,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-  console.error('❌ ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env for seeding');
+  console.error('❌ ADMIN_EMAIL and ADMIN_PASSWORD must be set in root .env for seeding');
   process.exit(1);
 }
 

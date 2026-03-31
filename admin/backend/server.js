@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-dotenv.config(); // ✅ FIXED (auto loads .env)
 
 import express from 'express';
 import cors from 'cors';
@@ -13,10 +12,12 @@ import uploadRouter from './src/routes/upload.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, '../../.env');
+dotenv.config({ path: envPath });
 
 const app = express();
-const PORT = process.env.PORT || 5001;
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN;
+const PORT = process.env.ADMIN_PORT || process.env.PORT || 5001;
+const CLIENT_ORIGIN = process.env.ADMIN_CLIENT_ORIGIN || process.env.CLIENT_ORIGIN;
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -49,7 +50,7 @@ const MONGO_URI = process.env.MONGO_URI;
 const DB_NAME = process.env.DB_NAME || 'textile';
 
 if (!MONGO_URI) {
-  console.error("❌ MONGO_URI missing in .env");
+  console.error("❌ MONGO_URI missing in root .env");
   process.exit(1);
 }
 

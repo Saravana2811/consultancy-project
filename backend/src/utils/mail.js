@@ -19,7 +19,7 @@ async function createTransporter() {
 
   if (!smtpUser || !smtpPass || hasPlaceholderCreds) {
     console.warn('⚠️  SMTP credentials missing — email disabled');
-    console.warn('💡 Set SMTP_USER and SMTP_PASS to real values in backend/.env (for Gmail, use an App Password).');
+    console.warn('💡 Set SMTP_USER and SMTP_PASS to real values in root .env (for Gmail, use an App Password).');
     return null;
   }
   

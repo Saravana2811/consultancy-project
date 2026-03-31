@@ -7,19 +7,13 @@ import User from './src/models/User.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Prefer local service env; fallback kept for older setups.
-const localEnvPath = path.resolve(__dirname, '.env');
-const parentEnvPath = path.resolve(__dirname, '../.env');
-dotenv.config({ path: localEnvPath });
-if (!process.env.MONGO_URI && !process.env.MONGODB_URI) {
-  dotenv.config({ path: parentEnvPath });
-}
+const envPath = path.resolve(__dirname, '../../.env');
+dotenv.config({ path: envPath });
 
 const MONGO_URI = process.env.MONGO_URI;
 const DB_NAME = process.env.DB_NAME || 'textile';
 if (!MONGO_URI) {
-  console.error('❌ MONGO_URI not set in .env');
+  console.error('❌ MONGO_URI not set in root .env');
   process.exit(1);
 }
 await mongoose.connect(MONGO_URI, { dbName: DB_NAME });
@@ -29,7 +23,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
-  console.error('❌ ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env for seeding');
+  console.error('❌ ADMIN_EMAIL and ADMIN_PASSWORD must be set in root .env for seeding');
   process.exit(1);
 }
 

@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
@@ -17,6 +17,8 @@ import Material from './src/models/Material.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, '../.env');
+dotenv.config({ path: envPath });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -164,7 +166,7 @@ app.post('/api/send-bill', async (req, res) => {
 async function start() {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
-    console.error('Missing MONGODB_URI in .env');
+    console.error('Missing MONGODB_URI in root .env');
     process.exit(1);
   }
   try {
