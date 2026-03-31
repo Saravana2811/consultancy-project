@@ -46,6 +46,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Enable trust proxy so Render/Heroku load balancers pass the HTTPS protocol securely
+// This is strictly required for 'secure: true' cookies to work on cross-domain hosts
+app.set("trust proxy", 1);
+
 // Session configuration for Passport
 if (!process.env.SESSION_SECRET) {
   console.warn('⚠️  WARNING: SESSION_SECRET not set in environment - using fallback');
@@ -57,7 +61,9 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: 'strict',
+    // When backend (Render) and frontend (Vercel) are on different domains,
+    // sameSite must be 'none' for cookies to be sent across the domains.
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
