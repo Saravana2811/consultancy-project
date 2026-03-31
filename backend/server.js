@@ -107,34 +107,34 @@ app.use('/api/payments', paymentsRouter);
 // send bill endpoint (POST { email, orderDetails, productId, quantityPurchased })
 app.post('/api/send-bill', async (req, res) => {
   const { email, orderDetails, productId, quantityPurchased } = req.body || {};
-  
+
   console.log('📧 Received send-bill request:', {
     email,
     productId,
     quantityPurchased,
     hasOrderDetails: !!orderDetails
   });
-  
+
   if (!email) return res.status(400).json({ error: 'email is required' });
   if (!orderDetails) return res.status(400).json({ error: 'orderDetails is required' });
-  
+
   try {
     // First send the bill email
     const result = await sendBillEmail(email, orderDetails);
-    
+
     if (result && result.ok) {
       console.log('✅ Bill email sent successfully');
-      
+
       // If email sent successfully and productId is provided, reduce quantity
       if (productId && quantityPurchased && quantityPurchased > 0) {
         console.log(`🔄 Attempting to reduce quantity for product: ${productId}, amount: ${quantityPurchased}`);
-        
+
         try {
           const material = await Material.findById(productId);
-          
+
           if (material) {
             console.log(`📦 Found material: ${material.title}, Current quantity: ${material.quantity}`);
-            
+
             if (material.quantity >= quantityPurchased) {
               const oldQuantity = material.quantity;
               material.quantity -= quantityPurchased;
@@ -153,18 +153,18 @@ app.post('/api/send-bill', async (req, res) => {
       } else {
         console.log('ℹ️ Skipping quantity reduction - missing productId or quantityPurchased');
       }
-      
+
       return res.json({ ok: true, message: 'Bill email sent successfully and quantity updated' });
     }
-    
-    return res.status(500).json({ 
-      ok: false, 
-      error: result && result.error ? result.error : 'Failed to send bill email' 
+
+    return res.status(500).json({
+      ok: false,
+      error: result && result.error ? result.error : 'Failed to send bill email'
     });
   } catch (err) {
     console.error('Bill email send failed', err);
-    res.status(500).json({ 
-      error: err && err.message ? err.message : 'Failed to send bill email' 
+    res.status(500).json({
+      error: err && err.message ? err.message : 'Failed to send bill email'
     });
   }
 });

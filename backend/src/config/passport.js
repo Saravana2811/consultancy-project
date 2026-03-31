@@ -23,14 +23,15 @@ export default function configurePassport() {
   });
 
   // Google OAuth Strategy
-  passport.use(
-    new GoogleStrategy(
-      {
-        clientID: GOOGLE_CLIENT_ID,
-        clientSecret: GOOGLE_CLIENT_SECRET,
-        callbackURL: `${BACKEND_URL}/api/auth/google/callback`,
-        scope: ['profile', 'email']
-      },
+  if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: GOOGLE_CLIENT_ID,
+          clientSecret: GOOGLE_CLIENT_SECRET,
+          callbackURL: `${BACKEND_URL}/api/auth/google/callback`,
+          scope: ['profile', 'email']
+        },
       async (accessToken, refreshToken, profile, done) => {
         try {
           // Extract email and name from profile
@@ -75,4 +76,7 @@ export default function configurePassport() {
       }
     )
   );
+  } else {
+    console.warn('⚠️ Google OAuth credentials missing. Google login strategy not enabled.');
+  }
 }
