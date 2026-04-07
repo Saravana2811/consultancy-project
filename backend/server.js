@@ -45,12 +45,9 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
-
-// Enable trust proxy so Render/Heroku load balancers pass the HTTPS protocol securely
-// This is strictly required for 'secure: true' cookies to work on cross-domain hosts
 app.set("trust proxy", 1);
 
-// Session configuration for Passport
+
 if (!process.env.SESSION_SECRET) {
   console.warn('⚠️  WARNING: SESSION_SECRET not set in environment - using fallback');
 }
@@ -95,9 +92,6 @@ app.get('/health', (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, ts: Date.now() });
 });
-
-// NOTE: Test endpoints removed for production. Use /api/health for health checks.
-
 app.use('/api/auth', authRouter);
 app.use('/api/materials', materialsRouter);
 app.use('/api/upload', uploadRouter);

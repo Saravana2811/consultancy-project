@@ -54,11 +54,12 @@ export default function Buy() {
 	};
 
 	const card = {
-		background: "#ffffff",
-		border: "1px solid #e5e7eb",
+		background: "rgba(255, 255, 255, 0.85)",
+		backdropFilter: "blur(8px)",
+		border: "1px solid rgba(212, 165, 116, 0.2)",
 		borderRadius: 12,
 		overflow: "hidden",
-		boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
+		boxShadow: "0 8px 20px rgba(0,0,0,0.04)",
 		display: "flex",
 		flexDirection: "column"
 	};

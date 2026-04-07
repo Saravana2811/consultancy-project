@@ -2,11 +2,11 @@
 
 :root {
 	--mem-fg: inherit;
-	--mem-muted: #78839a;
-	--mem-card-bg: rgba(255,255,255,0.06);
-	--mem-card-border: rgba(0,0,0,0.08);
-	--mem-brand: #4f7cff;
-	--mem-brand-2: #7c4fff;
+	--mem-muted: #5e6a82;
+	--mem-card-bg: rgba(255, 255, 255, 0.85);
+	--mem-card-border: rgba(212, 165, 116, 0.3);
+	--mem-brand: #d4a574;
+	--mem-brand-2: #ab7f53;
 }
 
 .mem-section {
@@ -55,8 +55,8 @@
 .mem-card-bg {
 	position: absolute;
 	inset: -2px;
-	background: radial-gradient(400px 140px at 20% -20%, rgba(79,124,255,0.18), transparent),
-							radial-gradient(360px 120px at 120% 120%, rgba(124,79,255,0.16), transparent);
+	background: radial-gradient(400px 140px at 20% -20%, rgba(212, 165, 116, 0.08), transparent),
+							radial-gradient(360px 120px at 120% 120%, rgba(43, 89, 117, 0.06), transparent);
 	filter: saturate(120%);
 	pointer-events: none;
 }

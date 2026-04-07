@@ -11,7 +11,7 @@ const MEMBERS = [
 	{ id: 3, name: "Maithiri M", role: "Accountant", image: m1, phone: "+91 638181668" },
 	{ id: 4, name: "Saravana M", role: "Technical Assistant", image: saro, phone: "+91 6383598864" },
 	{ id: 5, name: "Prabhu Chennimalai KD", role: "Technical Assistant", image: prabhu, phone: "+91 6380899390" },
-	{ id: 6, name: "Poornesh RK", role: "Technical Assistant", image: poor, phone: "+91 90442533625" },
+	{ id: 6, name: "Poornima RK", role: "Technical Assistant", image: poor, phone: "+91 90442533625" },
 	{ id: 7, name: "Karthi", role: "Employee", image: undefined, phone: "+91 9788991234" },
 	
 	

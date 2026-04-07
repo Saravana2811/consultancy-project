@@ -25,10 +25,12 @@
 }
 
 .location-card {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(212, 165, 116, 0.2);
   border-radius: 12px;
   padding: 18px;
-  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 .location-card h3 { margin: 0 0 8px; }
 .location-card p { margin: 6px 0; color: #444; }
@@ -36,7 +38,7 @@
 .location-cta {
   display: inline-block;
   margin-top: 12px;
-  background: #0b74de;
+  background: linear-gradient(135deg, #d4a574 0%, #b8905e 100%);
   color: #fff;
   padding: 8px 12px;
   border-radius: 8px;
@@ -72,12 +74,12 @@
 .map-overlay a.overlay-cta {
   position: relative;
   z-index: 2;
-  background: #0b74de;
+  background: linear-gradient(135deg, #d4a574 0%, #b8905e 100%);
   color: #fff;
   padding: 10px 14px;
   border-radius: 10px;
   text-decoration: none;
-  box-shadow: 0 6px 18px rgba(11,116,222,0.12);
+  box-shadow: 0 4px 16px rgba(212, 165, 116, 0.3);
 }
 
 /* Make overlay cover the iframe so clicks don't reach it */
